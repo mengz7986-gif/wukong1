@@ -1,0 +1,59 @@
+name: Flavor boundaries and timing delta Linux
+on:
+  push:
+    branches: [fix/flavor-boundaries-20261102]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  delta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tests/four_specials_requirements.txt
+      - name: Changed lexical and telemetry paths only
+        if: ${{ !contains(github.event.head_commit.message, '[ci-evidence-only]') }}
+        run: |
+          mkdir -p test-results
+          python -m pytest tests/test_flavor_boundary_delta.py tests/test_four_specials_regressions.py -k 'not order_counts_exclude and not preference_label_separate and not real_catalog_name_beginning and not runtime_snapshot and not catalog_target_resolution and not explicit_category and not bare_ambiguous and not exact_unique' -q --disable-warnings --junitxml=test-results/affected.xml
+          python -m pytest tests/test_full_chain_latency.py -k 'real_http_handler or cpu_prevalidation' -q --disable-warnings --junitxml=test-results/chain.xml
+      - name: Reuse completed Linux evidence for harness-only correction
+        if: ${{ contains(github.event.head_commit.message, '[ci-evidence-only]') }}
+        uses: actions/download-artifact@v4
+        with:
+          name: flavor-boundary-delta-evidence
+          path: test-results/
+          run-id: 41405583549
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Same-runner overhead comparison, simulated ACK only
+        if: ${{ !contains(github.event.head_commit.message, '[ci-evidence-only]') }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/baseline-990203e"
+          git archive 990203e2c7df060b710de10aae9bebfda5bdcb90 | tar -x -C "$RUNNER_TEMP/baseline-990203e"
+          for scenario in single group4; do
+            python tests/benchmark_receipt_ack.py --source "$RUNNER_TEMP/baseline-990203e" --scenario "$scenario" --samples 8 --output "$GITHUB_WORKSPACE/test-results/before-$scenario.json"
+            python tests/benchmark_receipt_ack.py --scenario "$scenario" --samples 8 --output "$GITHUB_WORKSPACE/test-results/after-$scenario.json"
+          done
+      - name: Verify recorded outcomes with scenario-specific sample counts
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for path in Path('test-results').glob('*.json'):
+              row=json.loads(path.read_text())
+              expected=4 if row['scenario'].endswith('4') else 8
+              assert row['orders']==row['acknowledged_receipts']==expected
+              assert row['fifo_stock_consistent'] and row['pool_checked_out']==0
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flavor-boundary-delta-evidence
+          path: test-results/

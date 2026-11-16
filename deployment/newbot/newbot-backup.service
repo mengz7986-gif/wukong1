@@ -1,0 +1,9 @@
+[Unit]
+Description=Newbot consistent verified online backup
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/newbot/current/deployment/newbot/protect.py backup --reason routine
+UMask=0077
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=20min

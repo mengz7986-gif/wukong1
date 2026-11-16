@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block title %}到货入库 / 库存管理{% endblock %}
+{% block page_heading %}到货入库 / 库存管理{% endblock %}
+{% block content %}
+<div class="sk-page-header">
+  <div>
+    <div class="sk-page-kicker">Inventory</div>
+    <h1 class="sk-page-title">到货入库 / 库存管理</h1>
+    <p class="sk-page-desc">按商品表格管理库存，支持每批不同成本，并可查询入库记录</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-primary" onclick="showBatchInboundModal()">＋ 批量入库</button>
+    <button class="btn btn-outline-danger" onclick="showBatchInboundModal('outbound')">－ 批量出库</button>
+    <button class="btn btn-outline-secondary" onclick="loadAll()"><i class="fas fa-sync"></i> 刷新</button>
+  </div>
+</div>
+
+<div class="sk-table-card p-3 mb-3" id="stockRecordsCard">
+  <h2 class="h5">出入库批次记录</h2><button class="btn btn-outline-secondary btn-sm" onclick="loadStockOperations()">刷新批次</button>
+  <div class="row g-2 my-2"><div class="col"><label>仓库</label><select id="operationWarehouseFilter" class="form-select"><option value="">全部仓库</option></select></div><div class="col"><label>分类</label><select id="operationCategoryFilter" class="form-select"><option value="">全部分类</option></select></div><div class="col"><label>类型</label><select id="operationKindFilter" class="form-select"><option value="">全部</option><option value="inbound">入库</option><option value="outbound">出库</option></select></div><div class="col"><label>开始日期</label><input id="operationStartFilter" type="date" class="form-control"></div><div class="col"><label>结束日期</label><input id="operationEndFilter" type="date" class="form-control"></div><div class="col"><label>商品 / 批次 / 备注</label><input id="operationSearchFilter" class="form-control"></div></div>
+  <div id="stockOperationsNotice" role="status"></div><div id="stockOperationsList"></div>
+</div>
+<div class="modal fade" id="batchAdjustModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">批量增加 / 减少库存</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row g-2 mb-3">
+          <div class="col-md-5"><label class="form-label">操作</label><select id="adjustOperation" class="form-select"><option value="add">增加库存</option><option value="subtract">减少库存</option></select></div>
+          <div class="col-md-7"><label class="form-label">仓库</label><select id="adjustWarehouse" class="form-select"></select></div>
+        </div>
+        <label class="form-label">批量数据（每行：商品编号,数量）</label>
+        <textarea id="batchAdjustText" class="form-control" rows="8" placeholder="P001,10&#10;P002,5"></textarea>
+        <div class="form-text">商品编号可填写 P 编号或商品名称；数量为本次增减数量。</div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button class="btn btn-primary" onclick="submitBatchAdjust()">确认执行</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="sk-filter-bar mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label">仓库筛选</label>
+      <select id="filterWarehouse" class="form-select" onchange="renderStockTable()"><option value="">全部仓库</option></select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">搜索商品</label>
+      <input id="filterKeyword" class="form-control" placeholder="商品名" oninput="renderStockTable()">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">入库日期</label>
+      <input id="inboundDay" type="date" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <button class="btn btn-outline-primary w-100" onclick="loadInbounds()"><i class="fas fa-search"></i> 查询入库</button>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3" id="currentInventoryArea">
+  <div class="col-lg-12">
+    <div class="sk-table-card">
+      <div class="sk-table-head">
+        <strong><i class="fas fa-boxes me-1"></i>当前库存</strong>
+        <span class="sk-meta" id="stockMeta">-</span>
+      </div>
+      <div id="inventory-category-list" class="p-3">
+        <div class="text-center text-muted py-4">加载中...</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5 d-none">
+    <div class="sk-table-card mb-3">
+      <div class="sk-table-head"><strong><i class="fas fa-truck-loading me-1"></i>入库记录</strong></div>
+      <div class="sk-table-wrap" style="max-height:420px;overflow:auto;">
+        <table class="table table-sm sk-table mb-0">
+          <thead><tr><th>时间</th><th>品类 / 口味</th><th>数量</th><th>单价</th><th>金额</th></tr></thead>
+          <tbody id="inbound-tbody"><tr><td colspan="5" class="text-center text-muted">选择日期查询</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="sk-table-card">
+      <div class="sk-table-head"><strong><i class="fas fa-layer-group me-1"></i>剩余批次</strong></div>
+      <div class="sk-table-wrap" style="max-height:280px;overflow:auto;">
+        <table class="table table-sm sk-table mb-0">
+          <thead><tr><th>批次</th><th>商品</th><th>剩余</th><th>成本</th></tr></thead>
+          <tbody id="batch-tbody"><tr><td colspan="4" class="text-center text-muted">加载中...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 旧 OCR 入口折叠保留 -->
+<div class="mt-3">
+  <a class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" href="#ocrBox">图片识别入库（旧）</a>
+  <div class="collapse mt-2" id="ocrBox">
+    <div class="alert alert-light border">如需继续用截图识别，可保留原流程；推荐使用上方“到货入库”手工确认批次价。</div>
+  </div>
+</div>
+
+<div class="modal fade" id="inboundModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">到货入库</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">商品</label>
+          <select id="inProduct" class="form-select"></select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">仓库</label>
+          <select id="inWarehouse" class="form-select"></select>
+        </div>
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="form-label">数量</label>
+            <input id="inQty" type="number" class="form-control" value="1" min="1">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">本批次成本</label>
+            <input id="inCost" type="number" step="0.01" class="form-control" placeholder="例如 47 / 48">
+          </div>
+        </div>
+        <div class="mt-3">
+          <label class="form-label">备注</label>
+          <input id="inNote" class="form-control" placeholder="供应商/批次说明">
+        </div>
+        <div class="form-text mt-2">同一商品不同进价请分批入库，系统按先进先出自动算利润。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button class="btn btn-primary" onclick="submitInbound()">确认入库</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="batchInboundModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="stockOperationTitle">批量入库</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-light border">
+          先选择真实仓库和分类。每行：<code>商品名 数量</code>，支持多空格或 Tab。
+          入库可填写本批进货价；留空时逐商品使用已确认的当前成本，缺价整批阻止。不同进货价分批录入。新入库不会改写历史成本。紧凑格式仅在目录唯一确认时允许；任何错误整批不执行，不创建商品或分类。
+        </div>
+        <div class="mb-3">
+          <label class="form-label">仓库</label>
+          <select id="batchInboundWarehouse" class="form-select"></select>
+          <label class="form-label">分类</label><select id="stockOperationCategory" class="form-select"></select>
+          <input id="stockOperationType" type="hidden" value="inbound">
+          <div id="stockOperationCostGroup"><label for="stockOperationCost" class="form-label">本批进货价</label><input id="stockOperationCost" type="number" min="0" step="0.01" class="form-control" placeholder="留空使用商品当前成本；填写0表示本批0元"></div>
+          <label class="form-label">备注</label><input id="stockOperationNote" class="form-control" maxlength="500">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">批量数据</label>
+          <textarea id="batchInboundText" class="form-control" rows="8" placeholder="苹果 500&#10;葡萄 100 12.5"></textarea>
+        </div>
+        <div class="d-flex gap-2 mb-3">
+          <button class="btn btn-outline-primary" type="button" onclick="previewBatchInbound()"><i class="fas fa-eye"></i> 预览校验</button>
+          <label><input type="checkbox" id="stockExecuteConfirm"> 确认整批操作，任意错误整批回滚</label>
+          <button id="stockOperationSubmit" class="btn btn-primary" type="button" onclick="submitBatchInbound()">确认整批执行</button>
+        </div>
+        <div class="small text-muted mb-2" id="batchInboundSummary">尚未预览</div>
+        <div class="table-responsive" style="max-height: 360px; overflow:auto;">
+          <table class="table table-sm sk-table mb-0">
+            <thead>
+              <tr>
+                <th>商品</th><th>当前库存</th><th>操作数量</th><th>操作后库存</th><th>入库成本 / 来源</th><th>匹配方式</th>
+              </tr>
+            </thead>
+            <tbody id="batchInboundPreviewBody">
+              <tr><td colspan="8" class="text-center text-muted">先预览再提交</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="historicalCostModal" tabindex="-1" aria-labelledby="historicalCostTitle">
+ <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header">
+  <h5 class="modal-title" id="historicalCostTitle">补录真实历史成本</h5><button class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+ </div><div class="modal-body">
+  <p id="historicalCostIdentity"></p><p id="historicalCostQuantity"></p>
+  <p>按实际历史 FIFO 顺序分批填写；只补成本，不增加实物库存，不改变参考价。</p>
+  <div id="historicalCostRows"></div><button type="button" class="btn btn-outline-secondary" id="addHistoricalCostRow">增加批次</button>
+  <p id="historicalCostBalance" role="status"></p>
+  <label for="historicalCostEvidence">真实进货凭据说明</label><textarea id="historicalCostEvidence" class="form-control" maxlength="2000"></textarea>
+  <label class="mt-3"><input type="checkbox" id="historicalCostConfirm"> 二次确认：成本及批次顺序来自真实凭据，数量完全守恒</label>
+  <p id="historicalCostError" class="text-danger" role="alert"></p>
+ </div><div class="modal-footer"><button type="button" id="submitHistoricalCost" class="btn btn-primary" disabled>确认补录</button></div></div></div>
+</div>
+<div class="modal fade" id="cancelStockModal" tabindex="-1" aria-labelledby="cancelStockTitle">
+ <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header">
+  <h5 class="modal-title" id="cancelStockTitle">取消整笔库存批次</h5><button class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+ </div><div class="modal-body">
+  <div id="cancelStockSummary"></div><label for="cancelStockReason">取消原因</label><input id="cancelStockReason" class="form-control" maxlength="500">
+  <p>整批校验；已消耗入库或无法可靠恢复历史成本时拒绝，不能重复取消。</p>
+  <label><input type="checkbox" id="cancelStockConfirm"> 二次确认：已核对批次、商品数量和逆向库存影响</label>
+  <p id="cancelStockError" class="text-danger" role="alert"></p>
+ </div><div class="modal-footer"><button type="button" id="submitCancelStock" class="btn btn-danger" disabled>确认取消整笔</button></div></div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/inventory.js?v=d1383dd614a1169601e917ecc1f87deaa572ed1b070aab6f64a04190b33518e1"></script>
+<script src="/static/js/inventory_operations.js?v=3385a5494d4f55f250f042de7c21cd4655a089e9f7259c1026607252622c5c9a"></script>
+{% endblock %}

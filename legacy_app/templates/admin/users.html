@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}用户管理 - 彩虹仓{% endblock %}
+{% block page_heading %}用户管理{% endblock %}
+{% block content %}
+<div class="sk-page-header">
+  <div>
+    <div class="sk-page-kicker">Customers</div>
+    <h1 class="sk-page-title">用户管理</h1>
+    <p class="sk-page-desc">查欠款、设单价、调客户等级</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn sk-btn-secondary btn-sm" onclick="showProxyPermissions()">代确认权限</button>
+    <button class="btn sk-btn-secondary btn-sm" onclick="refreshUsersPage()"><i class="fas fa-sync"></i> 刷新</button>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal"><i class="fas fa-plus"></i> 添加用户</button>
+  </div>
+</div>
+
+<div class="sk-toolbar">
+  <div class="sk-toolbar-left">
+    <input id="userSearch" class="form-control sk-search" type="search" placeholder="搜索 Telegram ID / 用户名 / 备注名">
+    <select id="userLevelFilter" class="form-select sk-filter-select">
+      <option value="all">全部等级</option>
+      <option value="0">VIP客户</option>
+      <option value="1">超级VIP</option>
+      <option value="2">合伙人</option>
+    </select>
+    <select id="userCustomPriceFilter" class="form-select sk-filter-select" aria-label="专属价格筛选"><option value="all">全部价格用户</option><option value="custom">有专属价格</option><option value="default">仅等级价</option></select>
+    <select id="userDebtFilter" class="form-select sk-filter-select">
+      <option value="all">全部欠款</option>
+      <option value="debt">有欠款</option>
+      <option value="clear">已结清</option>
+    </select>
+  </div>
+  <div class="sk-toolbar-right">
+    <span class="sk-count-pill" id="userCountPill">0 人</span>
+  </div>
+</div>
+
+<div class="sk-table-card mb-3">
+  <div class="sk-table-head">
+    <strong><i class="fas fa-handshake me-1"></i>代发授权申请</strong>
+    <span class="sk-meta">用户申请后，先设单价，再标记通过</span>
+  </div>
+  <div id="dropshipEmpty" class="sk-empty" style="display:none;">
+    <div class="sk-empty-icon"><i class="fas fa-inbox"></i></div>
+    <div class="sk-empty-title">暂无待处理申请</div>
+    <div class="sk-empty-desc">用户点击 Bot 的「申请代发」后会显示在这里</div>
+  </div>
+  <div class="sk-table-wrap" id="dropshipTableWrap" style="display:none;">
+    <table class="table table-hover sk-table">
+      <thead>
+        <tr>
+          <th>申请用户</th>
+          <th>状态</th>
+          <th>备注</th>
+          <th>申请时间</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="dropship-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="sk-table-card">
+  <div class="sk-table-head">
+    <strong><i class="fas fa-users me-1"></i>用户列表</strong>
+    <span class="sk-meta">专属单价优先于客户等级价</span>
+  </div>
+  <div id="loading" class="sk-empty">
+    <div class="spinner-border" role="status"></div>
+    <div class="sk-empty-desc mt-2">正在加载用户...</div>
+  </div>
+  <div id="users-content" style="display:none;">
+    <div id="usersEmpty" class="sk-empty" style="display:none;">
+      <div class="sk-empty-icon"><i class="fas fa-user-slash"></i></div>
+      <div class="sk-empty-title">没有匹配用户</div>
+      <div class="sk-empty-desc">调整筛选条件，或添加新用户</div>
+    </div>
+    <div class="sk-table-wrap" id="usersTableWrap">
+      <table class="table table-hover sk-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>用户</th>
+            <th>客户等级</th>
+            <th>欠款 / 预存</th>
+            <th>订单数</th>
+            <th>状态</th>
+            <th>注册时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 客户等级设置模态框 -->
+<div class="modal fade" id="agentLevelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">设置客户等级</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="agentLevelForm">
+                    <input type="hidden" id="agentLevelUserId">
+                    <div class="mb-3">
+                        <label for="agentLevelUserInfo" class="form-label">用户信息</label>
+                        <input type="text" class="form-control" id="agentLevelUserInfo" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="agentLevelSelect" class="form-label">客户等级</label>
+                        <select class="form-select" id="agentLevelSelect" required>
+                            <option value="0">VIP客户（标准价格）</option>
+                            <option value="1">超级VIP（中间价格）</option>
+                            <option value="2">合伙人（最优价格）</option>
+                        </select>
+                        <div class="form-text">
+                            不同等级对应不同的商品价格，下单时自动计算
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateAgentLevel()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加用户模态框 -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">添加用户</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="mb-3">
+                        <label for="telegramId" class="form-label">Telegram ID</label>
+                        <input type="text" class="form-control" id="telegramId" required>
+                        <div class="form-text">用户在 Telegram 中的唯一 ID</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-text">按 ID 自动读取 Telegram 显示名称及 @用户名；无法读取时明确提示，不猜填。</div>
+                        <label><input type="checkbox" id="authorizeNewUser" checked> 同时开通代发授权（默认开启，不改价格）</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="addUser()">添加</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 用户专属单价模态框 -->
+<div class="modal fade" id="userPriceModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">设置用户专属单价</h5>
+                    <div class="small text-muted" id="userPriceModalSubtitle">专属价优先于客户等级价</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="userPriceUserId">
+                <button type="button" id="resetUserPrices" class="btn btn-outline-danger mb-3">清除全部专属覆盖，恢复当前等级价</button>
+                <div class="alert alert-light border d-flex flex-wrap gap-3 align-items-center mb-3" id="userPriceUserInfo">
+                    <span><i class="fas fa-user me-1"></i><strong id="userPriceUserName">-</strong></span>
+                    <span class="text-muted">Telegram ID：<span id="userPriceTelegramId">-</span></span>
+                    <span class="text-muted">欠款：<span id="userPriceDebt">¥0.00</span></span>
+                    <span class="text-muted">预存：<span id="userPriceBalance">¥0.00</span></span>
+                </div>
+                <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+                    <input id="userPriceSearch" class="form-control" style="max-width:320px;" placeholder="搜索分类 / 口味 / 商品编号">
+                    <span class="small text-muted">只保存修改过的行；未填写修改不会影响其他商品</span>
+                </div>
+                <div class="alert alert-light border mb-3">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-5">
+                            <label class="form-label small text-muted mb-1">按商品品类批量设置</label>
+                            <select id="userPriceBatchCategory" class="form-select form-select-sm">
+                                <option value="">请先加载商品品类</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted mb-1">专属单价</label>
+                            <input id="userPriceBatchPrice" type="number" class="form-control form-control-sm" min="0" step="0.01" placeholder="例如 18.50">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary w-100" id="userPriceBatchButton" onclick="batchSetUserPriceByCategory()">
+                                批量设置
+                            </button>
+                        </div>
+                        <div class="col-md-2 small text-muted" id="userPriceBatchHint">
+                            会覆盖该品类所有口味
+                        </div>
+                    </div>
+                </div>
+                <div id="userPriceLoading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <div class="small text-muted mt-2">正在加载商品价格...</div>
+                </div>
+                <div id="userPriceEmpty" class="sk-empty py-4" style="display:none;">
+                    <div class="sk-empty-icon"><i class="fas fa-box-open"></i></div>
+                    <div class="sk-empty-title">没有匹配商品</div>
+                    <div class="sk-empty-desc">调整搜索条件后重试</div>
+                </div>
+                <div id="categoryPriceEditors"></div>
+                <div id="userPriceTableWrap" class="sk-table-wrap" style="display:none;">
+                    <table class="table table-hover sk-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>分类</th>
+                                <th>口味 / 商品</th>
+                                <th>商品编号</th>
+                                <th>当前默认价</th>
+                                <th>当前专属价</th>
+                                <th style="min-width:150px;">设置新单价</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-price-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="userPriceSaveStatus" class="small mt-3 text-muted"></div>
+                <style>
+                  .category-price-editor{display:flex;flex-wrap:wrap;gap:.65rem;align-items:center;padding:.5rem 0}
+                  .category-price-editor>div{flex:1 1 280px;min-width:0;overflow-wrap:anywhere}
+                  .category-price-editor label{flex:0 1 150px;max-width:100%}
+                  @media(max-width:480px){.category-price-editor>div{flex-basis:100%}.category-price-editor button{flex:1 1 100px}}
+                </style>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-primary" id="saveCategoryPricesButton" onclick="saveCategoryPriceDrafts()">预览分类修改</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveUserPricesButton" onclick="saveUserPrices()">
+                    <i class="fas fa-save me-1"></i>保存修改
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/users.js?v=fd3b7766eccb787d90e4d5a3606b7f412acb4aba10ff6d88cffb869b54cc506c"></script>
+<script src="/static/js/proxy_confirmation.js?v=1d5c90e30c35fa96b1574e6236bbac8cdacf9152164d7cf1847a3e642028f45c"></script>
+<script src="/static/js/telegram_groups.js?v=ded60bf0e76e6787035e9f52dd5c0e8e6a7d88897617f36a49e973947b392950"></script>
+{% endblock %}

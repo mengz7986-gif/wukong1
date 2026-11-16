@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}订单管理 - 彩虹仓{% endblock %}
+{% block page_heading %}订单管理{% endblock %}
+{% block content %}
+<div class="sk-page-header orders-compact-header">
+  <div>
+    <h1 class="sk-page-title">订单管理</h1>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn sk-btn-secondary btn-sm" onclick="loadOrders(true)"><i class="fas fa-sync"></i> 刷新</button>
+    <a class="btn btn-primary btn-sm" href="/admin/finance"><i class="fas fa-hand-holding-usd"></i> 去收账</a>
+  </div>
+</div>
+
+<div id="orderCancellationRecovery" class="alert alert-warning d-none" data-owner="{{ request.session.get('admin_username', '') }}" role="status">
+  <span id="orderCancellationRecoveryText">有待核对的取消批次，原组选单已保留。</span>
+  <button type="button" id="orderCancellationRecoveryOpen" class="btn btn-outline-danger btn-sm" onclick="openCancellationRecovery()">核对结果并继续取消</button>
+</div>
+<div class="sk-summary-grid orders-reconciliation" id="orderReconciliation" aria-live="polite">
+  <div class="sk-summary-card"><span>今日待录单</span><strong id="recPending">—</strong></div>
+  <div class="sk-summary-card"><span>今日已录单</span><strong id="recRecorded">—</strong></div>
+  <div class="sk-summary-card"><span>今日成功导出次数</span><strong id="recSuccess">—</strong></div>
+  <div class="sk-summary-card"><span>今日重复导出次数</span><strong id="recDuplicate">—</strong></div>
+  <div class="sk-summary-card"><span>今日导出失败次数</span><strong id="recFailed">—</strong></div>
+</div>
+
+<div class="sk-toolbar orders-compact-toolbar">
+  <div class="small text-muted">上方为北京时间今日统计，跟随仓库、分类、状态、结账与搜索条件；不随下方历史下单日期范围改变。导出次数按批次计算。</div>
+  <div class="orders-filter-grid">
+    <label class="orders-filter-field"><span>仓库</span><select id="orderWarehouseFilter" class="form-select"><option value="">全部仓库</option></select></label>
+    <label class="orders-filter-field"><span>商品分类</span><select id="orderCategoryFilter" class="form-select"><option value="">全部分类</option></select></label>
+    <label class="orders-filter-field orders-search-field"><span>搜索</span><input id="orderSearch" class="form-control sk-search" type="search" placeholder="订单号 / 用户 / 收件人 / 电话"></label>
+    <label class="orders-filter-field"><span>订单状态</span><select id="orderViewFilter" class="form-select sk-filter-select"><option value="all">全部订单</option><option value="split">分单订单</option><option value="pending">待录单</option><option value="recorded">已录单</option><option value="shipped">已发货</option><option value="cancelled">取消记录</option></select></label>
+    <label class="orders-filter-field"><span>结账状态</span><select id="orderPayFilter" class="form-select sk-filter-select"><option value="all">全部结账状态</option><option value="unpaid">有欠款</option><option value="paid">已结清</option></select></label>
+    <label class="orders-filter-field"><span>开始日期</span><input id="orderStartDate" type="date" class="form-control sk-filter-select"></label>
+    <label class="orders-filter-field"><span>结束日期</span><input id="orderEndDate" type="date" class="form-control sk-filter-select"></label>
+  </div>
+  <div class="orders-toolbar-row orders-status-row">
+    <span class="orders-row-label">订单状态</span>
+    <div class="sk-chip-group" id="orderQuickFilters">
+      <button type="button" class="sk-chip active" data-view="all">全部</button><button type="button" class="sk-chip" data-view="split">分单订单</button><button type="button" class="sk-chip" data-view="pending">待录单</button><button type="button" class="sk-chip" data-view="recorded">已录单</button><button type="button" class="sk-chip" data-view="shipped">已发货</button><button type="button" class="sk-chip" data-view="cancelled">取消记录</button>
+    </div>
+    <span class="sk-count-pill" id="orderCountPill">0 单</span>
+  </div>
+  <div class="orders-toolbar-row orders-actions-row">
+    <span class="orders-row-label">批量操作</span>
+    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectAllFilteredOrders()">选择全部筛选结果</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearOrderSelection()">清空选择</button>
+    <span id="orderSelectionCount" role="status">已选 0 单</span>
+    <button type="button" class="btn btn-warning btn-sm" onclick="batchShipOrders()"><i class="fas fa-truck"></i> 批量发货</button>
+    <button type="button" class="btn btn-outline-success btn-sm" onclick="batchRestoreOrders()"><i class="fas fa-undo"></i> 批量恢复</button>
+    <button type="button" class="btn btn-danger btn-sm" onclick="batchCancelOrders()"><i class="fas fa-times"></i> 批量取消</button>
+    <button type="button" class="btn btn-outline-success btn-sm" onclick="exportOrderList()"><i class="fas fa-download"></i> 导出订单</button>
+  </div>
+</div>
+
+<div class="sk-table-card orders-compact">
+  <div class="sk-table-head">
+    <strong><i class="fas fa-list me-1"></i>订单列表</strong>
+    <span class="sk-meta" id="orderHint">支持关键字与状态筛选</span>
+  </div>
+  <div id="loading" class="sk-empty">
+    <div class="spinner-border" role="status"></div>
+    <div class="sk-empty-desc mt-2">正在加载订单...</div>
+  </div>
+  <div id="orders-content" style="display:none;">
+    <div id="ordersEmpty" class="sk-empty" style="display:none;">
+      <div class="sk-empty-icon"><i class="fas fa-inbox"></i></div>
+      <div class="sk-empty-title">暂无匹配订单</div>
+      <div class="sk-empty-desc">试试清空筛选，或等待客户下单</div>
+    </div>
+    <div class="sk-table-wrap" id="ordersTableWrap">
+      <table class="table table-hover sk-table">
+        <thead>
+          <tr>
+            <th><label><input type="checkbox" id="selectAllOrders" onchange="toggleAllOrders(this.checked)"> 全选本页</label></th>
+            <th>订单号</th>
+            <th>用户</th>
+            <th>金额</th>
+            <th>商品</th>
+            <th>仓库</th>
+            <th>收货信息</th>
+            <th>利润</th>
+            <th>订单状态</th>
+            <th>结账状态</th>
+            <th>物流记录</th>
+            <th>时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="orders-tbody"></tbody>
+      </table>
+    </div>
+    <div class="d-flex justify-content-between align-items-center mt-3" id="ordersPagination" style="display:none;">
+      <span class="sk-meta" id="ordersPaginationHint"></span>
+      <label>每页 <select id="ordersPageSize"><option>20</option><option>50</option><option selected>100</option><option>200</option></select></label>
+      <label>跳至 <input id="ordersPageNumber" type="number" min="1" value="1" style="width:5em"> 页 <button type="button" id="ordersGoPage">跳转</button></label>
+      <div class="btn-group btn-group-sm" role="group">
+        <button type="button" class="btn btn-outline-secondary" id="ordersPrevPage">上一页</button>
+        <button type="button" class="btn btn-outline-secondary" id="ordersNextPage">下一页</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sk-table-card orders-compact" id="cancellationRequestsCard" style="display:none;">
+  <div class="sk-table-head">
+    <strong><i class="fas fa-user-clock me-1"></i>待审核取消申请</strong>
+    <span class="sk-meta" id="cancellationRequestsHint">客户取消不会立即生效</span>
+  </div>
+  <div class="sk-table-wrap">
+    <table class="table table-hover sk-table">
+      <thead>
+        <tr>
+          <th>订单</th>
+          <th>客户</th>
+          <th>金额</th>
+          <th>申请原因</th>
+          <th>申请时间</th>
+          <th>审核</th>
+        </tr>
+      </thead>
+      <tbody id="cancellationRequestsTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" id="editOrderAddressForm">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editAddressModalLabel"><i class="fas fa-map-marker-alt me-1"></i>修改收货地址 <span class="text-muted fs-6" id="editAddressOrderNumber"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label" for="editAddressCurrent">当前地址</label>
+          <textarea class="form-control" id="editAddressCurrent" rows="3" readonly></textarea>
+        </div>
+        <div class="mb-2">
+          <label class="form-label" for="editAddressValue">新收货地址</label>
+          <textarea class="form-control" id="editAddressValue" rows="4" maxlength="500" required placeholder="省市区 + 详细地址"></textarea>
+          <div class="form-text">仅修改收货地址；收件人和电话保持不变。</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="submit" class="btn btn-primary" id="saveOrderAddressBtn"><i class="fas fa-save me-1"></i>保存地址</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="editShippingModal" tabindex="-1" aria-labelledby="editShippingModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" id="editOrderShippingForm">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editShippingModalLabel"><i class="fas fa-truck-loading me-1"></i>修改运费 <span class="text-muted fs-6" id="editShippingOrderNumber"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label" for="editShippingProductAmount">商品金额</label>
+            <input class="form-control" id="editShippingProductAmount" type="text" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="editShippingCurrentFee">当前运费</label>
+            <input class="form-control" id="editShippingCurrentFee" type="text" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="editShippingPaidAmount">已收金额</label>
+            <input class="form-control" id="editShippingPaidAmount" type="text" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">修改后应付 / 欠款</label>
+            <div class="form-control-plaintext">
+              <span class="fw-semibold" id="editShippingGrandPreview">¥0.00</span>
+              <span class="text-muted"> / </span>
+              <span id="editShippingDuePreview">¥0.00</span>
+            </div>
+          </div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label" for="editShippingFeeValue">新运费（元）</label>
+          <input class="form-control" id="editShippingFeeValue" type="number" min="0" step="0.01" required placeholder="例如 6.00">
+          <div class="form-text">只改运费；商品金额不变。总价 = 商品金额 + 运费。若已收款超过新总价，多收款会转入用户预存。</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="submit" class="btn btn-primary" id="saveOrderShippingBtn"><i class="fas fa-save me-1"></i>保存运费</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<div class="modal fade" id="orderCancellationModal" tabindex="-1" aria-labelledby="orderCancellationTitle" aria-hidden="true">
+  <div class="modal-dialog"><form class="modal-content" onsubmit="submitOrderCancellation(event)">
+    <div class="modal-header"><h5 class="modal-title" id="orderCancellationTitle">取消订单</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button></div>
+    <div class="modal-body">
+      <p id="orderCancellationTargets"></p>
+      <p class="text-warning">确认后按原有规则回滚库存/FIFO及账务；批量操作可能包含已发货订单。</p>
+      <label for="orderCancellationReason" class="form-label">取消原因（必填，将显示在客户取消回执中）</label>
+      <textarea class="form-control" id="orderCancellationReason" required maxlength="2000" rows="4"></textarea>
+      <div id="orderCancellationError" class="text-danger" role="alert"></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button><button id="orderCancellationResume" type="button" class="btn btn-danger d-none" onclick="continueOrderCancellation()">核对结果并继续取消</button><button id="orderCancellationSubmit" type="submit" class="btn btn-danger">确认取消</button></div>
+  </form></div>
+</div>
+<script src="/static/js/order_cancel_recovery.js?v=20261022-recovery-1"></script>
+<script src="/static/js/orders.js?v=20261022-cancel-recovery-1"></script>
+{% endblock %}

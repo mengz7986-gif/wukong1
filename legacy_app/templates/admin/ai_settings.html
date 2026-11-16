@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}智能接单中心 - 彩虹仓{% endblock %}
+{% block page_heading %}智能接单中心{% endblock %}
+{% block content %}
+<style>
+.smart-center-grid{align-items:start}.smart-center-grid>.sk-table-card{margin:0;min-width:0}#knowledge-management{grid-column:1}#learning-management{grid-column:2}#smartExistingAliases{max-height:70vh;overflow:auto;overflow-wrap:anywhere}@media(max-width:767.98px){ #knowledge-management,#learning-management{grid-column:1}}
+.smart-center-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.smart-center-grid .wide{grid-column:1/-1}.smart-status{display:flex;gap:8px;flex-wrap:wrap}.smart-status .badge{font-size:12px}.smart-actions,.smart-section-nav{display:flex;gap:8px;flex-wrap:wrap}.smart-section-nav a{text-decoration:none}.provider-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.provider-summary>div{border:1px solid var(--bs-border-color);border-radius:8px;padding:10px}.advanced-provider summary{cursor:pointer;font-weight:600}@media(max-width:767.98px){.smart-center-grid,.provider-summary{grid-template-columns:1fr}.smart-center-grid .wide{grid-column:auto}.smart-center-grid .btn,.smart-section-nav a{width:100%}}
+</style>
+<div class="sk-page-header compact-page-header"><div><h1 class="sk-page-title">智能接单中心</h1><p class="sk-page-desc">本地识别商品与叫法；地址按需使用独立阿里云服务。页面状态直接读取运行配置。</p></div><a class="btn btn-outline-primary" href="/admin/address">阿里云地址服务设置</a></div>
+<nav class="smart-section-nav mb-3" aria-label="智能接单中心模块"><a class="btn btn-outline-primary btn-sm" href="#knowledge-management">📦 商品及口味叫法</a><a class="btn btn-outline-primary btn-sm" href="#address-management">📍 智能地址管理</a><a class="btn btn-outline-primary btn-sm" href="#learning-management">🧠 下单习惯与数量规则</a><a class="btn btn-outline-primary btn-sm" href="#performance-management">⚡ 接单性能管理</a><a class="btn btn-outline-primary btn-sm" href="#performance-records">📊 运行与费用统计</a></nav>
+<p id="notice" role="alert"></p><div class="smart-center-grid">
+
+  <section class="sk-table-card p-3" id="knowledge-management" data-rules-csrf="{{ rules_csrf|default('') }}"><h2 class="h5">📦 商品识别管理</h2><p>本地订单识别优先；正式目录、客户叫法、数量、小计、总计与缺货备选规则由订单安全校验终审。</p><div class="smart-actions"><a class="btn btn-outline-primary" href="/admin/rules">查看客户叫法与待审核候选</a><a class="btn btn-outline-secondary" href="/admin/products">查看正式商品目录</a></div><p class="small text-muted mt-2 mb-0">保留既有审核、撤回、仓库隔离、库存与历史审计；识别不会绕过正式规则。</p></section>
+  <section class="sk-table-card p-3" id="learning-management"><h2 class="h5">🧠 本地学习中心</h2><div class="smart-status"><span class="badge bg-success">候选需人工审核</span><span id="learningScheduleBadge" class="badge bg-secondary">每日复盘：读取中</span></div><p class="small text-muted mt-3 mb-0">这里仅展示下单习惯、商品数量、小计、总计、缺货备选、地址格式及其他规则。商品和口味叫法在左侧管理；现有审核、撤销与证据核对方式保持不变。</p></section>
+  <section class="sk-table-card p-3 wide" id="address-management"><h2 class="h5">📍 离线地址校验</h2><p>本地行政区库唯一核实后补齐上级省市区；保留原文楼栋、单元、房号。街道非必填；重名、不明确或与原文冲突时列出具体缺项，不猜补详细地址。</p><p id="offlineAddressStatus">读取离线库状态…</p><p class="small text-muted">已提交并核实的地址按用户隔离、加密缓存30天，仅作为候选，不能凭手机号覆盖本次地址。</p></section>
+  <section class="sk-table-card p-3 wide" id="performance-management"><h2 class="h5">⚡ 接单性能管理</h2><div class="provider-summary"><div><small class="text-muted d-block">订单处理任务</small><strong>4</strong></div><div><small class="text-muted d-block">按钮处理任务</small><strong>2</strong></div><div><small class="text-muted d-block">地址接口并发上限</small><strong>2</strong></div></div><p class="small text-muted mt-2 mb-0">同一客户的独立完整订单允许有限并行；同一草稿、待确认事项和按钮操作继续按先后顺序处理，并保留防重复保护。</p></section>
+  <section class="sk-table-card p-3 wide" id="performance-records"><h2 class="h5">📊 运行与费用统计</h2><p class="small text-muted">记录Provider、阶段耗时和最终校验结果，不展示客户原文或密钥。</p>
+  <p id="stageMetricsNotice" role="status"></p>
+  <button id="refresh-stage-metrics" type="button" class="btn btn-outline-secondary btn-sm">刷新分段性能</button>
+  <div class="table-responsive"><table class="table table-sm"><thead><tr><th>数据来源</th><th>服务商</th><th>处理阶段</th><th>样本</th><th>平均耗时（秒）</th><th>中位耗时（秒）</th><th>95%订单耗时（秒）</th><th>调用次数</th><th>错误</th><th>费用与口径</th></tr></thead><tbody id="stageMetricsRows"></tbody></table></div>
+</section>
+<section class="sk-table-card p-3 wide" id="recognition-review-management" data-can-manage="{{ '1' if ai_can_manage else '0' }}">
+  <h2 class="h5">识别原单留档（已整理记录默认收起）</h2>
+  <p class="small text-muted">无法唯一确认先拒单；原单、本地识别结果和人工审核记录保留。只有最高管理员通过审核后才写入本地词库，不修改、重提原订单。名称映射用于目标分类，口味映射仅用于对应分类；同名范围冲突时禁止通过。</p>
+  <p id="recognitionReviewStatus" role="status">读取复核队列…</p>
+  <label class="small mb-2"><input id="recognitionReviewShowArchived" type="checkbox"> 查看已整理原单留档（不自动生效）</label>
+  <div class="d-flex gap-2 mb-2"><button id="recognitionReviewRefresh" class="btn btn-outline-primary btn-sm" type="button">刷新</button><button id="recognitionReviewPrevious" class="btn btn-outline-secondary btn-sm" type="button">上一页</button><button id="recognitionReviewNext" class="btn btn-outline-secondary btn-sm" type="button">下一页</button></div>
+  <div id="recognitionReviewList"></div>
+</section></div>
+<style>#recognitionReviewModal{width:min(1100px,95vw);max-height:90vh;border:0;border-radius:16px;padding:0;box-shadow:0 20px 70px #0005}#recognitionReviewModal::backdrop{background:#0007}#recognitionReviewModal header{position:sticky;top:0;background:white;z-index:1;padding:18px 24px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center}#recognitionReviewDetail{padding:0 24px 24px}#recognitionReviewDialogStatus{padding:8px 24px;color:#b42318}</style>
+<dialog id="recognitionReviewModal" aria-labelledby="recognitionReviewTitle"><header><h2 id="recognitionReviewTitle" class="h5 mb-0">原单与识别详情</h2><button id="recognitionReviewClose" type="button" class="btn btn-outline-secondary btn-sm">关闭</button></header><p id="recognitionReviewDialogStatus" role="alert"></p><div id="recognitionReviewDetail" aria-live="polite"></div></dialog>
+<div class="modal fade" id="learningDetailModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header"><h2 class="modal-title h5">学习候选证据详情</h2><button class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button></div><div class="modal-body"><p class="small text-muted">默认展示一致性脱敏原文；历史未保存内容明确显示缺失，不回填推测。</p><pre id="learningDetailBody" class="border rounded p-2" style="white-space:pre-wrap;max-height:50vh;overflow:auto"></pre><div id="learningEditBox" class="mt-3"><label class="form-label">修改结构化建议（安全枚举）</label><select id="learningEditForm" class="form-select"></select><button id="learningEditSubmit" class="btn btn-outline-primary mt-2" type="button">修改后重新校验</button></div><button id="learningRawReveal" class="btn btn-outline-danger mt-3" type="button" {% if not ai_can_manage %}disabled{% endif %}>按最小权限查看该条原文并记录审计</button><pre id="learningRawBody" class="border rounded p-2 mt-2" style="white-space:pre-wrap" hidden></pre></div></div></div></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const csrf = {{ ai_csrf|tojson }};
+const el = id => document.getElementById(id);
+let currentLearningDetail=null;
+async function call(path,body){const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-AI-CSRF':csrf},body:JSON.stringify(body||{}),cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.detail||'操作失败');return d;}
+function action(fn){return async()=>{try{await fn();}catch(error){el('notice').textContent=error.message||'操作失败';}};}
+function confirmSave(summary,fn){if(window.confirm(summary))Promise.resolve().then(fn).catch(error=>el('notice').textContent=error.message);}
+async function loadKnowledgeCenter(){
+  const r=await fetch('/api/ai/learning-center?status=pending',{cache:'no-store'});if(!r.ok)throw Error('学习运行状态读取失败');
+  const data=await r.json();el('learningScheduleBadge').textContent='本地规则 · 人工审核后生效';
+  const section=el('learning-management');let box=el('knowledgeCandidateList');if(!box){box=document.createElement('div');box.id='knowledgeCandidateList';box.className='mt-3';section.append(box);}box.replaceChildren();
+  const labels={pending:'待审核',approved:'已审核',withdrawn:'已撤销',rejected:'已拒绝',superseded:'已被修改建议替代'};
+  const kinds={QUANTITY:'商品数量／小计总计',ALTERNATE:'备选表达',ADDRESS:'地址格式',HABIT:'下单习惯'};
+  const forms={EXPLICIT_ADMIN:'明确填写完整地址',CONTACT_BEFORE_PRODUCT:'先填写收件信息',PRODUCT_BEFORE_CONTACT:'先填写商品',ITEM_SUFFIX:'商品名称后填写数量',ITEM_PREFIX:'商品名称前填写数量',SECTION_SUBTOTAL:'当前分类商品小计',ORDER_TOTAL:'整单总计',AMOUNT_EXPRESSION:'金额算式',ITEM_CHINESE_QUANTITY:'商品后的中文数量',UNIQUE_ADMIN_COMPLETION:'行政区唯一证据补全',MULTILINE_ADDRESS:'多行地址',MULTI_SECTION_ORDER:'多个商品分类',EXPLICIT_BACKUP:'明确填写缺货备选',EXPLICIT_OR:'明确填写二选一',OUT_OF_STOCK_REPLACEMENT:'缺货时替换'};
+  const reviewStates={FAILED:'失败',ANALYZED:'复盘完成，建议待人工审核',EMPTY:'无待复盘候选',CLAIMED:'执行中',DEFERRED_BUSY:'等待安全空闲窗口',COMPLETED:'完成',SUCCEEDED:'完成',RUNNING:'执行中'};
+  const reviewErrors={TIMEOUT:'请求超时',NETWORK_ERROR:'网络连接异常',RATE_LIMIT:'供应商限流',PROVIDER_ERROR:'供应商服务异常',AUTH_ERROR:'认证失败',CREDIT_ERROR:'余额或额度不足',INVALID_RESPONSE:'响应结构异常',PARSE_ERROR:'复盘结果格式异常',DATABASE_ERROR:'本地数据库异常',UNCLASSIFIED_ERROR:'错误分类待核查'};
+  const runs=document.createElement('p');runs.className='small';const latestRun=data.daily_runs.at(-1);const failureDetail=latestRun&&latestRun.state==='FAILED'?('；原因：'+(reviewErrors[latestRun.error_category]||'历史原因未分类')+'；未启用新知识'):'';runs.textContent='最近候选整理：'+(latestRun?latestRun.day+' / '+(reviewStates[latestRun.state]||'状态待核对')+failureDetail:'暂无记录')+'；自动启用：禁止';const sorted=(data.organization_summary||[]).at(-1);if(sorted)runs.textContent='已整理识别记录 '+sorted.records+' 条：商品／口味在左侧，规则来源 '+sorted.rule_sources+' 条在右侧；重复或无用记录已收起；未自动启用。';box.append(runs);
+  const usage=data.usage||{};const usageCard=document.createElement('div');usageCard.className='border rounded p-2 mb-3';
+  const usageTitle=document.createElement('strong');usageTitle.textContent='已审核知识命中统计';usageCard.append(usageTitle);
+  const usageLine=document.createElement('p');usageLine.className='small mb-1';
+  const localShare=usage.local_share_percent==null?'暂无分母':usage.local_share_percent+'%';
+  const aiShare=usage.ai_share_percent==null?'暂无分母':usage.ai_share_percent+'%';
+  usageLine.textContent='命中订单 '+(usage.reviewed_hit_orders??0)+'；其中本地完成 '+(usage.local_without_ai??0)+'（占已记录去向 '+localShare+'），AI参与 '+(usage.ai_calls??0)+'（占已记录去向 '+aiShare+'）。';usageCard.append(usageLine);
+  const evidence=document.createElement('p');evidence.className='small text-muted mb-0';evidence.textContent=(usage.baseline_evidence||'暂无固定对照基线')+'；费用：'+(usage.cost_cny==null?(usage.cost_evidence||'暂无学习命中范围的独立费用归因'):'¥'+usage.cost_cny)+'；纠错率：'+(usage.correction_rate==null?(usage.correction_rate_evidence||'未统计'):usage.correction_rate)+'。上述比例不是人工准确率。';usageCard.append(evidence);box.append(usageCard);
+  if(!Object.values(data.bucket_counts||{}).some(n=>n>0)){const empty=document.createElement('p');empty.textContent='尚无已提交订单产生的表达候选。';box.append(empty);}
+  function renderRows(rows,target){for(const row of rows){
+    const card=document.createElement('div');card.className='border rounded p-2 mb-2';const label=document.createElement('p');const scope=row.scope==='USER'?'仅当前用户':row.scope==='GLOBAL'?'全局':'范围未记录';label.textContent=(kinds[row.kind]||row.kind)+' / '+(forms[row.form]||row.form)+' · '+scope+' · '+(labels[row.status]||row.status)+' · '+row.count+' 次 · 版本 '+row.revision;card.append(label);
+    if(row.organized_sources){const sources=document.createElement('p');sources.className='small text-muted';sources.textContent='已归类识别来源 '+row.organized_sources+' 条（不计作已成交次数，不自动批准）';card.append(sources);}
+    const detail=document.createElement('button');detail.type='button';detail.className='btn btn-sm btn-outline-secondary me-2';detail.textContent='查看证据详情';detail.onclick=()=>openLearningDetail(row);card.append(detail);
+    for(const [action,title] of row.status==='approved'?[['withdraw','撤销已审核知识']]:row.evidence_complete&&(row.status==='pending'||row.status==='withdrawn')?[['approve','审核通过'],['reject','拒绝']]:[]){
+      const button=document.createElement('button');button.type='button';button.className='btn btn-sm btn-outline-primary me-2';button.textContent=title;button.disabled=!{{ ai_can_manage|default(false)|tojson }};
+      button.onclick=()=>confirmSave(title+'：'+(forms[row.form]||'历史学习规则')+'。此操作不创建商品或猜测地址。',async()=>{await call('/api/ai/learning-center/review',{id:row.id,action,revision:row.revision,review_version:row.review_version});await loadKnowledgeCenter();});card.append(button);
+    }target.append(card);
+  }}
+  for(const [status,title] of [['pending','待审核候选'],['approved','已通过'],['rejected','已拒绝'],['withdrawn','已撤销'],['incomplete','证据不完整']]){
+    const group=document.createElement('details');group.open=status==='pending'||status==='approved';group.className='border rounded p-2 mb-2';
+    const heading=document.createElement('summary');heading.textContent=title+'（'+(data.bucket_counts?.[status]||0)+'）';group.append(heading);
+    const list=document.createElement('div');list.className='mt-2';group.append(list);box.append(group);
+    let loaded=false,loading=false,page=1;
+    async function load(){
+      if(loading)return;loading=true;
+      try{
+      const response=await fetch('/api/ai/learning-center?status='+status+'&page='+page,{cache:'no-store'});
+      if(!response.ok)throw Error('候选读取失败');const value=await response.json();list.replaceChildren();renderRows(value.candidates,list);
+      if(!value.candidates.length){const empty=document.createElement('p');empty.textContent='暂无候选';list.append(empty);}
+      const controls=document.createElement('div');controls.className='d-flex flex-wrap gap-2';
+      for(const [label,next,disabled] of [['上一页',page-1,page===1],['下一页',page+1,page*20>=value.total]]){const b=document.createElement('button');b.type='button';b.className='btn btn-sm btn-outline-secondary';b.textContent=label;b.disabled=disabled;b.onclick=()=>{page=next;load().catch(e=>el('notice').textContent=e.message);};controls.append(b);}list.append(controls);loaded=true;
+      }finally{loading=false;}
+    }
+    group.ontoggle=()=>{if(group.open&&!loaded)load().catch(e=>el('notice').textContent=e.message);};
+    if(group.open)load().catch(e=>el('notice').textContent=e.message);
+  }
+  const versions=document.createElement('details');const heading=document.createElement('summary');heading.textContent='知识版本与撤销审计（最近100条）';versions.append(heading);const text=document.createElement('pre');text.className='small';text.style.whiteSpace='pre-wrap';text.textContent=JSON.stringify(data.versions,null,2);versions.append(text);box.append(versions);
+}
+loadKnowledgeCenter().catch(e=>el('learningScheduleBadge').textContent=e.message);
+async function openLearningDetail(row){
+  const r=await fetch('/api/ai/learning-center/detail?id='+encodeURIComponent(row.id),{cache:'no-store'});if(!r.ok)throw Error('候选证据读取失败');
+  const data=await r.json();currentLearningDetail={row,data};el('learningRawBody').hidden=true;el('learningRawBody').textContent='';
+  const statusText={NORMALIZED_PROVIDER_RESULT:'已保存模型分析',RAW_LOCAL_PARSER_RESULT:'已保存本地识别结果',MISSING_NOT_PERSISTED:'历史内容未保存',COMMITTED_VALIDATED:'订单安全校验通过',COMMITTED:'订单已建立'};
+  const scopeText={ITEM_QUANTITY:'商品明细数量',SECTION_SUBTOTAL:'当前分类小计',ORDER_TOTAL:'整单总计'};
+  const describe=result=>{if(!result)return '历史内容未保存';const lines=[];(result.items||[]).forEach(item=>lines.push('商品：'+(item.category||'')+(item.product?'／'+item.product:'')+'，数量：'+(item.quantity??'未识别')));(result.quantity_scopes||[]).forEach(item=>lines.push('数量证据：'+(scopeText[item.kind]||item.kind)+' '+(item.quantity??'未识别')+(item.section?'，分类：'+item.section:'')+(item.item?'，商品：'+item.item:'')));if(result.declared_total!=null)lines.push('填写总数：'+result.declared_total);if(result.computed_total!=null)lines.push('计算总数：'+result.computed_total);return lines.join('\n')||'没有可展示的结构化字段';};
+  const evidenceRows=data.records||[];const blocks=evidenceRows.map((record,index)=>{
+    const local=record.local_parser_result||{};const validator=record.validator_result||{};const final=record.final_business_result||{};
+    const reference=(final.order_numbers&&final.order_numbers.length)?final.order_numbers.join('、'):'历史记录未保存订单编号';
+    return ['证据 '+(index+1),'关联订单：'+reference,'保留至：'+(record.expires_at||'未知'),'',
+      '【脱敏原文】',record.redacted_original||'历史未保存','',
+      '【本地识别结果】',statusText[local.status]||'历史内容未保存',describe(local.result),'',
+      '【订单安全校验】',(statusText[validator.status]||'历史内容未保存')+'；发现问题 '+(validator.error_count??'未统计')+' 项',describe(validator.result),'',
+      '【最终业务结果】',(statusText[final.status]||'状态未保存')+'；订单 '+(final.order_count??'未统计')+' 笔；'+reference].join('\n');});
+  el('learningDetailBody').textContent=blocks.length?blocks.join('\n\n----------------\n\n'):(data.reason||'历史证据未保存');
+  const allowed={QUANTITY:['ITEM_SUFFIX','ITEM_PREFIX','SECTION_SUBTOTAL','ORDER_TOTAL','AMOUNT_EXPRESSION'],ALTERNATE:['EXPLICIT_BACKUP','EXPLICIT_OR','OUT_OF_STOCK_REPLACEMENT'],ADDRESS:['EXPLICIT_ADMIN','UNIQUE_ADMIN_COMPLETION','MULTILINE_ADDRESS'],HABIT:['PRODUCT_BEFORE_CONTACT','CONTACT_BEFORE_PRODUCT','MULTI_SECTION_ORDER','ITEM_CHINESE_QUANTITY']}[row.kind]||[];
+  el('learningEditForm').replaceChildren(...allowed.map(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;option.selected=value===row.form;return option;}));
+  el('learningEditBox').hidden=row.status==='approved'||row.status==='superseded';
+  el('learningRawReveal').hidden=data.raw_access!=='HIGHEST_ADMIN_AUDITED';
+  bootstrap.Modal.getOrCreateInstance(el('learningDetailModal')).show();
+}
+el('learningEditSubmit').onclick=action(async()=>{if(!currentLearningDetail)return;const row=currentLearningDetail.row;await call('/api/ai/learning-center/revise',{id:row.id,form:el('learningEditForm').value,revision:row.revision,review_version:row.review_version});bootstrap.Modal.getOrCreateInstance(el('learningDetailModal')).hide();await loadKnowledgeCenter();});
+el('learningRawReveal').onclick=action(async()=>{if(!currentLearningDetail)return;const records=currentLearningDetail.data.records||[];const record=records.at(-1);if(!record)throw Error('历史原文未保存，无法查看');const reason=window.prompt('请填写查看原文的必要原因（3-200字，将记入审计）','人工核对学习证据');if(!reason||reason.trim().length<3)return;const d=await call('/api/ai/learning-center/detail/raw',{id:currentLearningDetail.row.id,commit_fingerprint:record.commit_fingerprint,reason:reason.trim()});el('learningRawBody').textContent=d.raw_original;el('learningRawBody').hidden=false;});
+async function loadStageMetrics(){
+  const r=await fetch('/api/ai/performance',{cache:'no-store'});if(!r.ok)throw Error('分段性能读取失败');const data=await r.json();
+  el('stageMetricsNotice').textContent=data.configuration_error?'性能记录读取失败':data.cost_note+'；业务阶段可包含子阶段，不能直接相加。';
+  el('stageMetricsRows').replaceChildren();
+  const modes={application:'实际应用链路',cloud_live:'真实云端调用',fixed_response:'固定回包',historical_reconstruction:'历史重建'};
+  const stages={MESSAGE_QUEUE:'消息排队',WORKER_CLAIM:'订单任务领取',WORKER_EXECUTION:'订单任务处理',AI_PERMIT_WAIT:'等待AI空闲',AI_WORKER_QUEUE:'AI任务调度',ORDER_AI:'订单智能识别',CONTACT_AI:'收件信息智能识别',ADDRESS_SERVICE:'地址补全',ADDRESS_HTTP:'地址接口',VALIDATOR:'订单安全校验',HTTP_CREATE:'创建订单',TELEGRAM_SEND:'发送回执',COMPLETE_RECEIPT:'消息处理及回执',PROVIDER_HTTP:'模型接口',LOCAL_PARSER:'本地订单识别',API_TOTAL:'创建订单总耗时'};
+  Object.assign(stages,{QUEUE_TOTAL:'接收至处理及回执完成',ORDER_MODEL_HTTP:'订单模型HTTP',CONTACT_MODEL_HTTP:'Contact模型HTTP',FLAVOR_MODEL_HTTP:'口味候选模型HTTP',AI_ESTIMATED_COST:'既有模型费用估算',ADDRESS_STRUCTUREADDRESS:'地址Structure',ADDRESS_COMPLETEADDRESS:'地址Complete'});
+  stages.LEGACY_WORKER_WAIT='旧固定回包Worker等待（含消息排队）';
+  const seconds=value=>value==null?'—':(Number(value)/1000).toFixed(3);
+  for(const row of data.groups||[]){const tr=document.createElement('tr');const charge=k=>row.cost_sample_count?.[k]?'¥'+row.cost_cny[k]:'未登记';const cost='实际 '+charge('actual')+' / 估算 '+charge('estimated')+' / 模拟 '+charge('simulated')+(row.unknown_cost_calls?'；'+row.unknown_cost_calls+'次费用未核实':'');const provider=(row.provider||'本地识别')+(row.provider_source==='stage_inferred'?'（按阶段归属）':row.provider_source==='unavailable'?'（来源缺失）':'');for(const value of [modes[row.mode]||row.mode,provider,stages[row.stage]||row.stage,row.samples,seconds(row.mean_ms),seconds(row.p50_ms),seconds(row.p95_ms),row.calls,row.errors,cost]){const td=document.createElement('td');td.textContent=String(value);tr.append(td);}el('stageMetricsRows').append(tr);}
+}
+el('refresh-stage-metrics').onclick=action(loadStageMetrics);loadStageMetrics().catch(e=>el('stageMetricsNotice').textContent=e.message);
+fetch('/api/ai/offline-address-status',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{el('offlineAddressStatus').textContent='数据指纹 '+d.snapshot_id.slice(0,12)+'；省级 '+d.provinces+'／城市 '+d.cities+'／区县 '+d.regions+'；父级关系 '+(d.broken_city_parents||d.broken_region_parents?'需核查':'完整')+'。这是当前安装快照，不宣称实时官方最新。';}).catch(()=>el('offlineAddressStatus').textContent='离线库状态读取失败，请管理员核查；不会自动猜地址');
+</script>
+<script src="/static/js/learning_review.js?v=20261022-manual-alias-3" defer></script>
+<script src="/static/js/recognition_review_text.js?v=20261022-readable-1" defer></script>
+<script src="/static/js/recognition_review.js?v=20261022-organized-review-1" defer></script>
+{% endblock %}

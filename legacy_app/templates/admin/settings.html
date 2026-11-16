@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}运费与接单设置 - 彩虹仓{% endblock %}
+{% block page_heading %}运费与接单设置{% endblock %}
+{% block content %}
+<div class="sk-page-header compact-page-header">
+  <div>
+    <h1 class="sk-page-title">运费与接单设置</h1>
+    <a href="/admin/warehouses" class="btn btn-outline-primary btn-sm">仓库管理 / 库存图片</a>
+    <p class="sk-page-desc">仅管理运费规则、接单开关和按商品品类分单规则</p>
+  </div>
+</div>
+
+<div class="sk-table-card mb-3"><div class="sk-table-head"><strong>智能地址配置</strong></div><div class="p-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+ <div><p class="mb-1">地址使用本地离线行政区库校验，只补全唯一可核实的上级关系。</p><p class="small text-muted mb-0">不依赖付费地址接口；原文楼栋、单元、房号完整保留，不确定时提示具体缺项。</p></div>
+ <a class="btn btn-outline-primary flex-shrink-0" href="/admin/ai#address-management">智能接单中心 · 智能地址管理</a>
+</div></div>
+<div class="sk-filter-bar mb-3"><label for="shippingWarehouse" class="form-label">仓库</label><select id="shippingWarehouse" class="form-select"><option value="">请选择仓库</option></select></div>
+<div class="sk-table-card mb-3"><div class="sk-table-head"><strong>当前仓库分类运费</strong></div><div class="p-3">
+ <p id="warehouseShippingNotice" role="status"></p>
+ <table class="table sk-table"><thead><tr><th>分类</th><th>运费</th><th>规则</th><th>操作</th></tr></thead><tbody id="warehouseShippingRows"></tbody></table>
+</div></div>
+<div class="modal fade" id="warehouseShippingModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+ <div class="modal-header"><h5 class="modal-title" id="warehouseShippingIdentity">分类运费</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+ <div class="modal-body"><label for="warehouseShippingFee">每段运费</label><input id="warehouseShippingFee" type="number" min="0" step="0.01" class="form-control">
+ <label for="warehouseShippingUnits">每段商品数量（不足一段按一段）</label><input id="warehouseShippingUnits" type="number" min="1" step="1" class="form-control">
+ <p id="warehouseShippingError" class="text-danger" role="alert"></p></div>
+ <div class="modal-footer"><button id="warehouseShippingReset" class="btn btn-outline-secondary">恢复现有默认规则</button><button id="warehouseShippingSave" class="btn btn-primary">保存</button></div>
+</div></div></div>
+<div class="modal fade" id="pauseConfirmModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">确认接单状态</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="pauseConfirmText"></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">返回</button><button id="pauseConfirmSubmit" class="btn btn-danger">确认</button></div></div></div></div>
+<div class="sk-table-card mb-3" id="salesPauseCard">
+  <div class="sk-table-head"><strong><i class="fas fa-power-off me-1"></i>接单开关</strong><span id="salesPauseBadge" class="badge bg-secondary">读取中…</span></div>
+  <div class="card-body compact-card-body">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+      <button id="btnCloseAllWarehouse" class="btn btn-danger btn-sm"><i class="fas fa-ban me-1"></i>全部停仓</button>
+      <button id="btnOpenAllWarehouse" class="btn btn-success btn-sm"><i class="fas fa-play me-1"></i>全部开仓</button>
+      <span id="salesPauseAt" class="text-muted small"></span>
+    </div>
+    <div class="table-responsive mb-2"><table class="table table-sm align-middle mb-0"><thead><tr><th>仓库</th><th>状态</th><th>停仓时间</th><th class="text-end">操作</th></tr></thead><tbody id="salesPauseRows"><tr><td colspan="4" class="text-muted">读取中…</td></tr></tbody></table></div>
+    <div class="row g-2 align-items-end"><div class="col-lg-9"><label class="form-label">停仓提示语</label><textarea id="salesPauseMessage" class="form-control" rows="2" placeholder="当前已暂停接单..."></textarea></div><div class="col-lg-3"><button id="btnSavePauseMsg" class="btn btn-outline-secondary btn-sm w-100"><i class="fas fa-save me-1"></i>保存提示语</button></div></div>
+  </div>
+</div>
+
+<div class="sk-table-card mb-3" id="packagingCard">
+  <div class="sk-table-head"><strong><i class="fas fa-boxes-stacked me-1"></i>分单规则</strong><span id="packagingBadge" class="badge bg-secondary">读取中…</span></div>
+  <div class="card-body compact-card-body">
+    <div id="bundleShippingRule" class="border rounded p-3 mb-3" hidden><strong>福袋 · 全后台</strong>　运费方式：包邮 ¥0　<label>每笔最多 <input id="bundleShippingMax" type="number" min="1" value="1" style="width:70px"> 份</label> <button id="saveBundleShippingRule" class="btn btn-sm btn-outline-primary">保存福袋规则</button><span id="bundleShippingError" class="text-danger ms-2"></span></div>
+    <div class="row g-2 mb-3 align-items-end">
+      <div class="col-md-3"><label class="form-label">同地址每日累计限件（0不限）</label><input id="addressDailyMax" type="number" min="0" class="form-control" value="0"><small>超限进入分单队列，不拒单；周期沿用当前自然日。</small></div>
+      <div class="col-md-3"><label class="form-label">同地址每日订单数（0不限）</label><input id="addressDailyOrders" type="number" min="0" class="form-control" value="0"><small>独立于限件；超额新订单进入分单等待，不重排历史订单。</small></div>
+      <div class="col-md-3"><label class="form-label">仓库筛选</label><select id="splitWarehouseFilter" class="form-select"><option value="all">全部仓库</option></select></div>
+      <div class="col-md-4"><label class="form-label">品类搜索</label><input id="splitCategorySearch" class="form-control" placeholder="输入品类名称或编号"></div>
+      <div class="col-md-2"><label class="form-label">默认每笔数量</label><input id="unitsPerPackage" type="number" min="1" class="form-control" value="6"></div>
+      <div class="col-md-3"><button id="btnSaveDefaultSplit" class="btn btn-outline-primary w-100"><i class="fas fa-save me-1"></i>保存默认数量</button></div>
+    </div>
+    <div class="table-responsive split-rule-table-wrap"><table class="table table-sm align-middle mb-0"><thead><tr><th style="width:34px"><input id="selectAllSplitCategories" type="checkbox"></th><th>仓库</th><th>品类编号</th><th>品类</th><th style="width:150px">每笔限制数量</th><th>规则</th></tr></thead><tbody id="splitCategoryRows"><tr><td colspan="6" class="text-muted text-center py-3">读取中…</td></tr></tbody></table></div>
+    <div class="split-batch-bar mt-3"><div><strong>已选 <span id="splitSelectedCount">0</span> 个品类</strong><div class="small text-muted">设置后仅影响所选品类；其他品类继续使用默认数量。</div></div><div class="d-flex gap-2 align-items-center"><input id="batchSplitLimit" type="number" min="1" class="form-control" value="6" style="width:120px"><button id="btnBatchSaveSplit" class="btn btn-primary"><i class="fas fa-check me-1"></i>批量设置</button><button id="btnBatchResetSplit" class="btn btn-outline-secondary">恢复默认</button></div></div>
+  </div>
+</div>
+
+<details class="sk-table-card"><summary class="p-3">现有默认运费（未单独配置的分类使用）</summary><div>
+  <div class="sk-table-head"><strong><i class="fas fa-truck me-1"></i>运费规则</strong></div>
+  <div class="card-body compact-card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-2"><label class="form-label">计费模式</label><select id="shipMode" class="form-select"><option value="qty_rule">按包裹计费</option><option value="warehouse">按仓库运费</option></select></div>
+      <div class="col-md-2"><label class="form-label">普通每包运费</label><input id="normalFeeAmount" type="number" step="0.01" class="form-control"></div>
+      <div class="col-md-2"><label class="form-label">普通商品数量</label><input id="normalQty" type="number" min="1" class="form-control"></div>
+      <div class="col-md-2"><label class="form-label">烟弹每包运费</label><input id="podFeeAmount" type="number" step="0.01" class="form-control"></div>
+      <div class="col-md-2"><label class="form-label">烟弹数量</label><input id="podQty" type="number" min="1" class="form-control"></div>
+      <div class="col-md-2"><button class="btn btn-primary w-100" onclick="saveShippingSettings()"><i class="fas fa-save me-1"></i>保存运费</button></div>
+      <div class="col-12"><label class="form-label">烟弹识别关键词（逗号分隔）</label><input id="podKeywords" class="form-control"><div id="rulePreview" class="form-text"></div></div>
+    </div>
+  </div>
+</div></div></details>
+{% endblock %}
+{% block scripts %}
+<script>
+let splitSettings = {units_per_package: 6, category_limits: {}, categories: [], warehouses: []};
+function loadShippingSettings(){ $.get('/api/settings/shipping').done(function(data){ $('#shipMode').val(data.mode || 'qty_rule'); $('#normalFeeAmount').val(data.normal_fee_amount ?? data.fee_amount); $('#podFeeAmount').val(data.pod_fee_amount ?? data.fee_amount); $('#normalQty').val(data.normal_qty); $('#podQty').val(data.pod_qty); $('#podKeywords').val((data.pod_keywords || []).join(',')); $('#rulePreview').text(data.rule_text || ''); }); }
+function saveShippingSettings(){ $.post('/api/settings/shipping', {mode:$('#shipMode').val(),fee_amount:$('#normalFeeAmount').val(),normal_fee_amount:$('#normalFeeAmount').val(),pod_fee_amount:$('#podFeeAmount').val(),normal_qty:$('#normalQty').val(),pod_qty:$('#podQty').val(),pod_keywords:$('#podKeywords').val()}).done(function(){alert('运费规则已保存');loadShippingSettings();}).fail(function(xhr){alert((xhr.responseJSON&&xhr.responseJSON.detail)||'保存失败');}); }
+function renderSalesPause(data){ const rows=data.warehouses||[],allPaused=!!data.all_paused,anyPaused=!!data.any_paused; let label='正常接单中',cls='bg-success'; if(allPaused){label='全部停仓';cls='bg-danger';}else if(anyPaused){label='部分停仓';cls='bg-warning text-dark';} $('#salesPauseBadge').attr('class','badge '+cls).text(label); $('#salesPauseAt').text(allPaused&&data.paused_at?('全部停仓时间：'+RainbowBusinessTime.format(data.paused_at)):''); $('#btnCloseAllWarehouse').prop('disabled',allPaused); $('#btnOpenAllWarehouse').prop('disabled',!anyPaused); const $body=$('#salesPauseRows').empty(); if(!rows.length)$body.append('<tr><td colspan="4">还没有配置仓库</td></tr>'); rows.forEach(function(row){const paused=!!row.paused;const $button=$('<button>').addClass('btn btn-sm '+(paused?'btn-success':'btn-outline-danger')).text(paused?'开仓':'停仓').on('click',function(){setSalesPause(!paused,row.warehouse_id,paused?'':('确认停「'+(row.name||'')+'」？'));}); $('<tr>').append($('<td>').text(row.name||('仓库'+row.warehouse_id))).append($('<td>').html('<span class="badge '+(paused?'bg-danger':'bg-success')+'">'+(paused?'已停仓':'接单中')+'</span>')).append($('<td>').addClass('text-muted small').text(paused&&row.paused_at?RainbowBusinessTime.format(row.paused_at):'')).append($('<td>').addClass('text-end').append($button)).appendTo($body);}); if(document.activeElement!==document.getElementById('salesPauseMessage'))$('#salesPauseMessage').val(data.message||''); }
+function loadSalesPause(){ $.get('/api/settings/sales_pause',renderSalesPause); }
+function setSalesPause(paused,warehouseId,confirmText){if(confirmText){$('#pauseConfirmText').text(confirmText);$('#pauseConfirmSubmit').off('click').on('click',()=>{ $('#pauseConfirmModal').modal('hide');setSalesPause(paused,warehouseId);});$('#pauseConfirmModal').modal('show');return;}const data={paused:paused?'1':'0',message:$('#salesPauseMessage').val()};if(warehouseId!==undefined&&warehouseId!=='all')data.warehouse_id=warehouseId;$.post('/api/settings/sales_pause',data).done(resp=>{renderSalesPause(resp);filterSelectedWarehouse();}).fail(function(xhr){$('#warehouseShippingNotice').text((xhr.responseJSON&&xhr.responseJSON.detail)||'操作失败');});}
+function escapeSettingsHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});}
+function renderSplitRules(){const warehouse=$('#splitWarehouseFilter').val()||'all',keyword=($('#splitCategorySearch').val()||'').trim().toLowerCase(),$body=$('#splitCategoryRows').empty();const rows=(splitSettings.categories||[]).filter(function(row){if(warehouse!=='all'&&String(row.warehouse_id)!==String(warehouse))return false;return !keyword||[row.name,row.category_display_id,row.warehouse_name].join(' ').toLowerCase().indexOf(keyword)>=0;});if(!rows.length){$body.append('<tr><td colspan="6" class="text-muted text-center py-3">暂无匹配品类</td></tr>');return;}rows.forEach(function(row){const custom=Object.prototype.hasOwnProperty.call(splitSettings.category_limits||{},String(row.id)),limit=custom?splitSettings.category_limits[String(row.id)]:splitSettings.units_per_package;$body.append('<tr data-category-id="'+row.id+'"><td><input class="split-category-check" type="checkbox" value="'+row.id+'"></td><td>'+escapeSettingsHtml(row.warehouse_name)+'</td><td class="sk-meta">'+escapeSettingsHtml(row.category_display_id||row.id)+'</td><td><strong>'+escapeSettingsHtml(row.name)+'</strong></td><td><input class="form-control form-control-sm split-limit-input" type="number" min="1" value="'+limit+'" data-category-id="'+row.id+'"></td><td><span class="badge '+(custom?'bg-primary':'bg-light text-dark border')+'">'+(custom?'独立规则':'使用默认')+'</span></td></tr>');});updateSplitSelectedCount();}
+function loadPackaging(){ $.get('/api/settings/packaging').done(function(data){splitSettings=data;$('#unitsPerPackage,#batchSplitLimit').val(data.units_per_package||6);$('#packagingBadge').attr('class','badge bg-success').text('默认每笔 '+(data.units_per_package||6)+' 件');const $filter=$('#splitWarehouseFilter').empty().append('<option value="all">全部仓库</option>');(data.warehouses||[]).forEach(function(row){$filter.append('<option value="'+row.id+'">'+escapeSettingsHtml(row.name)+'</option>');});renderSplitRules();}).fail(function(){$('#packagingBadge').attr('class','badge bg-secondary').text('读取失败');}); }
+function saveSplitSettings(categoryLimits){
+ if(categoryLimits!=null&&Object.values(categoryLimits).some(value=>!Number.isSafeInteger(value)||value<1)){
+  const detail='品类分单数量必须为不小于1的整数，未保存';alert(detail);
+  return $.Deferred().reject({responseJSON:{detail},alertShown:true}).promise();
+ }
+ const fields=[['#unitsPerPackage','默认分单数量',1],['#addressDailyMax','同地址每日累计限件',0],['#addressDailyOrders','同地址每日订单数',0]],values=[];
+ for(const [selector,label,min] of fields){
+  const raw=String($(selector).val()??'').trim(),value=Number(raw);
+  if(!raw||!Number.isSafeInteger(value)||value<min){
+   const detail=label+'必须为不小于'+min+'的整数，未保存';alert(detail);
+   return $.Deferred().reject({responseJSON:{detail},alertShown:true}).promise();
+  }
+  values.push(value);
+ }
+ return $.post('/api/settings/packaging',{units_per_package:values[0],address_daily_max_units:values[1],address_daily_max_orders:values[2],category_limits:JSON.stringify(categoryLimits==null?(splitSettings.category_limits||{}):categoryLimits)}).done(loadPackaging);
+}
+$(function(){ $.get('/api/settings/packaging').done(function(data){$('#addressDailyMax').val(data.address_daily_max_units||0);$('#addressDailyOrders').val(data.address_daily_max_orders||0);}); });
+function selectedSplitIds(){return $('.split-category-check:checked').map(function(){return String(this.value);}).get();} function updateSplitSelectedCount(){$('#splitSelectedCount').text(selectedSplitIds().length);}
+$(function(){loadShippingSettings();loadSalesPause();loadPackaging();$('#btnCloseAllWarehouse').on('click',function(){setSalesPause(true,'all','确认全部停仓？');});$('#btnOpenAllWarehouse').on('click',function(){setSalesPause(false,'all');});$('#btnSavePauseMsg').on('click',function(){$.post('/api/settings/sales_pause',{paused:'0',message_only:'1',message:$('#salesPauseMessage').val()}).done(function(resp){renderSalesPause(resp);alert('提示语已保存');});});$('#splitWarehouseFilter,#splitCategorySearch').on('change input',renderSplitRules);$('#selectAllSplitCategories').on('change',function(){$('.split-category-check').prop('checked',this.checked);updateSplitSelectedCount();});$('#splitCategoryRows').on('change','.split-category-check',updateSplitSelectedCount);$('#btnSaveDefaultSplit').on('click',function(){saveSplitSettings().done(function(){alert('默认分单数量已保存');});});$('#btnBatchSaveSplit').on('click',function(){const ids=selectedSplitIds();if(!ids.length){alert('请先勾选品类');return;}const limit=Number($('#batchSplitLimit').val()),limits=Object.assign({},splitSettings.category_limits||{});ids.forEach(function(id){limits[id]=limit;});saveSplitSettings(limits).done(function(){alert('已批量设置 '+ids.length+' 个品类');});});$('#btnBatchResetSplit').on('click',function(){const ids=selectedSplitIds();if(!ids.length){alert('请先勾选品类');return;}const limits=Object.assign({},splitSettings.category_limits||{});ids.forEach(function(id){delete limits[id];});saveSplitSettings(limits).done(function(){alert('已恢复默认规则');});});$('#splitCategoryRows').on('change','.split-limit-input',function(){const id=String($(this).data('category-id')),limit=Number($(this).val()),limits=Object.assign({},splitSettings.category_limits||{});limits[id]=limit;saveSplitSettings(limits).fail(function(xhr){if(!xhr.alertShown)alert((xhr.responseJSON&&xhr.responseJSON.detail)||'保存失败');});});});
+</script>
+<script src="/static/js/warehouse_shipping.js?v=revision-scoped"></script>
+<script src="/static/js/bundle_shipping.js"></script>
+{% endblock %}

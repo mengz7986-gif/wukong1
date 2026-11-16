@@ -1,0 +1,26 @@
+{
+  "deployed_at_utc": "2026-11-01T16:35:55.586473+00:00",
+  "code_hashes": {
+    "legacy_app/telegram_accounts.py": "e2febe31ccb8bd255f83bd6d655ddd4706bfea4bb4bdfed19b4cfd6c14093b6d",
+    "legacy_app/notification_routing.py": "39c975536d3b76bdb3f78dbe971ae7b328a1d7a12320b288dcf27a5224f27ce6",
+    "legacy_app/p0_recovery_protection.py": "28901b001942e7dda016196bcc9838774754b3a4dd886f3c9af0259d50f9c577",
+    "legacy_app/receipt_review_gate.py": "1caa92ec1ce437e6ab79dacc6eee0d9bddb0bdb3c1465b8eb7c262c0200102ab",
+    "legacy_app/frozen_direct_receipts.py": "81cbf31a7c505942e8a5a691569f67bd3e10d31b0eb681d772d8e66c0613bb2f"
+  },
+  "policy_sha256": "dc6ddc2b34bf6b977c9cac51a4369a93be2b7452e5fdeaa23f56f10da3dec8cd",
+  "approved_added_receipts": 14,
+  "frozen_receipts": 29,
+  "frozen_direct_audit_attempts": 73,
+  "frozen_jobs": 9,
+  "historical_notifications_unchanged": true,
+  "notice_cutoff_unchanged": true,
+  "login_http_status": 200,
+  "messages_replayed": false,
+  "business_writes": false,
+  "rollback_database_integrity": "ok",
+  "release_tag": "release-2026-11-02-notice-routing",
+  "local_tests_passed": 36,
+  "affected_account_group_routing_verified": true,
+  "natural_delivery_verification": "pending_next_business_event",
+  "direct_hold_policy_sha256": "a60ddcc3511fa2d1dbb3e2c9455d1f62c34624b35ecfced0f37a6cc6943ae429"
+}

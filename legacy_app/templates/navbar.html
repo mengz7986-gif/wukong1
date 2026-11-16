@@ -1,0 +1,15 @@
+<header class="sk-topbar">
+    <div class="sk-topbar-left">
+        <button class="sk-icon-btn" type="button" data-sk-toggle="sidebar" aria-label="打开或收起功能菜单" aria-controls="sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div>
+            <div class="sk-topbar-kicker">RAINBOW WAREHOUSE</div>
+            <div class="sk-topbar-title">{% block page_heading %}彩虹仓后台{% endblock %}</div>
+        </div>
+    </div>
+    <div class="sk-topbar-right">
+        <span class="sk-pill"><i class="fas fa-shield-alt"></i> 已登录</span>
+        <a class="btn btn-sm sk-btn-secondary" href="/logout"><i class="fas fa-sign-out-alt"></i> 退出</a>
+    </div>
+</header>

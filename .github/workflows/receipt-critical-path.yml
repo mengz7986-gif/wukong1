@@ -1,0 +1,72 @@
+name: Receipt critical path delta Linux
+on:
+  push:
+    branches: [fix/receipt-critical-path-20261102]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  critical-path:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tests/four_specials_requirements.txt
+      - name: Reuse prior 29 checks and prepare exact checkpoint comparison
+        run: |
+          mkdir -p test-results "$RUNNER_TEMP/receipt-d9ffa57"
+          baseline=d9ffa57eb84492ccb4803afeb795dac4ba3496f8
+          if [ '${{ contains(github.event.head_commit.message, '[region-init-only]') }}' = true ]; then baseline=21a6fe130723fc37222a1aff391495f03173b89a; fi
+          git archive "$baseline" | tar -x -C "$RUNNER_TEMP/receipt-d9ffa57"
+          echo "$baseline" > test-results/baseline-commit.txt
+          echo 'Unaffected prior evidence: GitHub Actions 41338946453; no replay of complete suite.'
+      - name: Delta correctness and affected safety paths only
+        if: ${{ !contains(github.event.head_commit.message, '[region-init-only]') }}
+        env:
+          RECEIPT_BASELINE_SOURCE: ${{ runner.temp }}/receipt-d9ffa57
+        run: |
+          python -m pytest tests/test_receipt_critical_path.py -q --disable-warnings --junitxml=test-results/new-delta.xml
+          python -m pytest tests/test_receipt_speed.py -k 'cross_warehouse or direct_timeout' -q --disable-warnings --junitxml=test-results/affected-receipt.xml
+          python -m pytest tests/test_full_chain_latency.py -k 'source_guards_have_bounded or cpu_prevalidation' -q --disable-warnings --junitxml=test-results/affected-source-guards.xml
+          python -m pytest tests/test_four_specials_regressions.py -k 'order_counts_exclude or preference_label_separate or rejected_manual_mapping or rejection_is_not_a_cross_brand' -q --disable-warnings --junitxml=test-results/affected-recognition.xml
+      - name: Region single initialization delta; reuse successful 14-test stage
+        if: ${{ contains(github.event.head_commit.message, '[region-init-only]') }}
+        run: |
+          python -m pytest tests/test_region_index_singleflight.py -q --disable-warnings --junitxml=test-results/region-singleflight.xml
+          python -m pytest tests/test_full_chain_latency.py -k 'optional_address_trust_revocation or cpu_prevalidation' -q --disable-warnings --junitxml=test-results/region-source-guards.xml
+      - name: Same runner and load; simulated Telegram ACK only
+        run: |
+          for scenario in single multi group4 same_customer4; do
+            /usr/bin/time -f '%M' -o "test-results/before-$scenario-peak-rss-kib.txt" python tests/benchmark_receipt_ack.py --source "$RUNNER_TEMP/receipt-d9ffa57" --scenario "$scenario" --samples 20 --output "$GITHUB_WORKSPACE/test-results/before-$scenario.json"
+            /usr/bin/time -f '%M' -o "test-results/after-$scenario-peak-rss-kib.txt" python tests/benchmark_receipt_ack.py --scenario "$scenario" --samples 20 --output "$GITHUB_WORKSPACE/test-results/after-$scenario.json"
+          done
+          if [ '${{ contains(github.event.head_commit.message, '[region-init-only]') }}' != true ]; then
+            python tests/benchmark_receipt_ack.py --source "$RUNNER_TEMP/receipt-d9ffa57" --scenario multi --samples 20 --arrival-seconds .5 --output "$GITHUB_WORKSPACE/test-results/before-overload.json"
+            python tests/benchmark_receipt_ack.py --scenario multi --samples 20 --arrival-seconds .5 --output "$GITHUB_WORKSPACE/test-results/after-overload.json"
+          fi
+      - name: Record measured outcomes without hiding missed goals
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          outcomes={}
+          for path in Path('test-results').glob('*.json'):
+              row=json.loads(path.read_text())
+              assert row['orders']==row['acknowledged_receipts'] and row['fifo_stock_consistent']
+              assert row['pool_checked_out']==0 and row['peak_active_leases']<=4
+              goal=3000 if row['scenario']=='single' else 5000 if row['scenario']=='multi' else 8000
+              value=row['last_ack_since_first_source_ms'] if row['scenario'].endswith('4') else row['source_to_complete_ack']['p95_ms']
+              outcomes[path.stem]={'simulated':True,'goal_ms':goal,'measured_ms':value,'met':value<=goal}
+          Path('test-results/goals.json').write_text(json.dumps(outcomes,indent=2))
+          print(json.dumps(outcomes,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: receipt-critical-path-evidence
+          path: test-results/

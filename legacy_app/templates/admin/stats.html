@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}经营统计{% endblock %}
+{% block page_heading %}经营统计{% endblock %}
+{% block content %}
+<div class="sk-page-header">
+  <div>
+    <div class="sk-page-kicker">Analytics</div>
+    <h1 class="sk-page-title">经营统计</h1>
+    <p class="sk-page-desc">盈利、入库成本、仓库剩余货值一览</p>
+  </div>
+</div>
+<div class="sk-filter-bar mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-2">
+      <label class="form-label">仓库</label>
+      <select id="statsWarehouse" class="form-select"><option value="">全部仓库</option></select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary w-100" onclick="loadPeriodStats()"><i class="fas fa-search"></i> 查询</button>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">订单生成开始日期</label>
+      <input id="shippingStartDate" type="date" class="form-control">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">订单生成结束日期</label>
+      <input id="shippingEndDate" type="date" class="form-control">
+    </div>
+    <div class="col-md-2">
+      <button class="btn sk-btn-secondary w-100" onclick="exportShippingOrders()"><i class="fas fa-download"></i> 导出订单出货明细</button>
+    </div>
+  </div>
+</div>
+<div class="row g-3" id="summaryCards"></div>
+<div class="row g-3 mt-1">
+  <div class="col-lg-6">
+    <div class="sk-table-card">
+      <div class="sk-table-head"><strong>当前仓库库存货值（按已确认成本估值）</strong></div>
+      <div class="card-body" id="valueBox"><div class="text-muted">加载中...</div></div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="sk-table-card">
+      <div class="sk-table-head"><strong>说明</strong></div>
+      <div class="card-body small text-muted">
+        <div>• 商品利润 = 商品销售额 − FIFO对应批次进货价；运费代收代付，不计入利润，也不再次扣除。</div>
+        <div>• 同商品不同进价分批入库后，出库自动先出早的批次</div>
+        <div>• 当前库存货值按当前已确认成本 × 当前库存计算；缺价/待确认部分未计入，不改写历史成本。</div>
+        <div>• 涉及历史进货价缺失的销售，只显示已记录的销售成本，不计算完整商品利润；客户应付、未结账和收款仍包含运费。</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row g-3 mt-1">
+  <div class="col-12">
+    <div class="sk-table-card">
+      <div class="sk-table-head d-flex justify-content-between align-items-center">
+        <strong>出货量明细：品类 / 口味</strong>
+        <span id="salesBreakdownSummary" class="sk-meta">加载中...</span>
+      </div>
+      <div class="table-responsive">
+        <div class="card-body p-0" id="salesBreakdownBox">
+          <div class="text-muted p-3">加载中...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/stats.js?v=20261012-beijing-24h"></script>
+{% endblock %}

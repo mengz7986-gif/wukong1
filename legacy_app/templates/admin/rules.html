@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}规则与词典 - 彩虹仓{% endblock %}
+{% block page_heading %}规则与词典{% endblock %}
+{% block content %}
+<div class="sk-table-card p-3">
+<h1 class="h4">规则与词典</h1>
+<p>核心规则和内置词典只读。人工Alias支持型号映射与分类内精确口味映射，新增后待审核；启用时必须存在真实目录目标。</p>
+<h2 class="h5">历史审计待审核候选</h2><div id="review-candidates"></div>
+<p id="notice" role="status"></p><div id="summary" class="row g-2 mb-3"></div>
+<h2 class="h5">核心规则</h2><div id="rules" class="mb-3"></div>
+<h2 class="h5">业务词典</h2>
+<form id="filter" class="row g-2 mb-3">
+<div class="col-md-4"><input name="q" class="form-control" placeholder="搜索关键词"></div>
+{% for name,label in [('type','类型'),('source','来源'),('status','状态'),('category','分类'),('model','型号')] %}
+<div class="col-md-2"><select name="{{ name }}" class="form-select"><option value="">全部{{ label }}</option></select></div>
+{% endfor %}<div><button class="btn btn-outline-primary">筛选</button></div></form>
+<div class="table-responsive" style="max-height:520px"><table class="table table-striped"><thead style="position:sticky;top:0;background:var(--bs-body-bg,#fff);z-index:1"><tr><th>ID/Key</th><th>类型</th><th>标准值</th><th>Alias</th><th>分类/型号</th><th>模式</th><th>来源</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="rows"></tbody></table></div>
+<button type="button" id="newAlias" class="btn btn-primary mt-3" {% if not rules_can_manage %}disabled{% endif %}>新增人工Alias</button>
+<div class="modal fade" id="aliasEditorModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">人工Alias · 保存后待审核</h5><button class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button></div><div class="modal-body">
+<fieldset {% if not rules_can_manage %}disabled{% endif %}>
+<h2 class="h5">新增/编辑人工Alias</h2>
+<form id="editor" class="row g-2"><input id="edit_id" type="hidden">
+<div class="col-md-3"><select id="edit_type" class="form-select"><option value="EXPLICIT_FLAVOR">分类内口味Alias</option><option value="MODEL_ALIASES">型号Alias</option></select></div>
+{% for id,label in [('category','分类'),('alias','客户Alias'),('standard','目录标准口味')] %}
+<div class="col-md-3"><input id="edit_{{ id }}" class="form-control" required maxlength="120" placeholder="{{ label }}"></div>
+{% endfor %}<div class="col-md-3"><button class="btn btn-primary">保存为待审核</button><button type="button" id="reset" class="btn btn-outline-secondary">清空</button></div></form>
+</fieldset>
+</div></div></div></div>
+<div class="modal fade" id="aliasActionModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">确认人工Alias操作</h5><button class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button></div><div class="modal-body"><p id="aliasActionIdentity"></p><label><input type="checkbox" id="aliasActionCheck"> 确认操作这条人工Alias</label><p id="aliasActionError" class="text-danger" role="alert"></p></div><div class="modal-footer"><button type="button" id="aliasActionSubmit" class="btn btn-primary" disabled>确认执行</button></div></div></div></div>
+{% if not rules_can_manage %}<p class="text-muted">词典修改仅限满足安全策略的最高管理员。当前可浏览及测试解析。</p>{% endif %}
+<h2 class="h5 mt-4">测试解析</h2>
+<p>只调用本地解析器，不调用AI，不创建订单，不扣库存。不等同于下单库存/履约校验。</p>
+<textarea id="text" class="form-control" rows="6" maxlength="20000" placeholder="粘贴测试订单文本"></textarea>
+<button id="test" class="btn btn-outline-primary mt-2">测试解析</button><div id="result" class="mt-3"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const csrf={{ rules_csrf|tojson }}, canManage={{ rules_can_manage|tojson }};
+const el=id=>document.getElementById(id);
+function line(parent,value,tag='div'){const n=document.createElement(tag);n.textContent=value;parent.append(n);return n;}
+async function request(url,body){const r=await fetch(url,body?{method:'POST',headers:{'Content-Type':'application/json','X-Rules-CSRF':csrf},body:JSON.stringify(body),cache:'no-store'}:{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.detail||'请求失败');return d;}
+function action(fn){return async e=>{if(e)e.preventDefault();try{await fn();}catch(error){el('notice').textContent=error.message;}};}
+async function load(filtered=false){const query=new URLSearchParams(new FormData(el('filter')));const d=await request('/api/rules'+(filtered?'?'+query:''));el('summary').replaceChildren();const fields={'Shared Parser':d.shared_version,'Shared Hash':d.shared_hash,'彩虹仓Parser':d.parser_version,'最近更新':d.updated_at?RainbowBusinessTime.format(d.updated_at):'未记录','同步来源':d.sync_source,'同步时间':d.sync_at?RainbowBusinessTime.format(d.sync_at):'未记录','规则数':d.rule_count,'词典数':d.dictionary_count,'待审核':d.pending_count,'冲突':d.conflict_count};Object.entries(fields).forEach(([k,v])=>{const n=line(el('summary'),k+'：'+v);n.className='col-md-6 small';});el('rules').replaceChildren();d.rules.forEach(r=>line(el('rules'),r.group+' · '+r.id+' · '+r.implementation+' · 只读','p'));
+if(!filtered){['type','source','status','category','model'].forEach(key=>{const s=el('filter').elements[key];while(s.options.length>1)s.remove(1);[...new Set(d.rows.map(r=>r[key]).filter(Boolean))].sort().forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;s.append(o);});});}
+el('rows').replaceChildren();d.rows.forEach(r=>{const tr=document.createElement('tr');['id','type','standard','alias'].forEach(k=>line(tr,r[k],'td'));line(tr,(r.category||'—')+' / '+(r.model||'—'),'td');['mode','source','status'].forEach(k=>line(tr,r[k]||'未记录','td'));line(tr,r.updated_at?RainbowBusinessTime.format(r.updated_at):'未记录','td');const cell=line(tr,r.readonly?'只读':'','td');if(!r.readonly&&canManage){const button=(label,fn)=>{const b=document.createElement('button');b.textContent=label;b.className='btn btn-sm btn-outline-secondary me-1';b.onclick=action(fn);cell.append(b);};button('编辑',()=>{el('edit_id').value=r.id;el('edit_type').value=r.type;['alias','standard','category'].forEach(k=>el('edit_'+k).value=r[k]);$('#aliasEditorModal').modal('show');});button('审核启用',()=>queueAliasAction(r,'active'));button('停用',()=>queueAliasAction(r,'disabled'));button('删除',()=>queueAliasAction(r,'delete'));}el('rows').append(tr);});}
+el('filter').onsubmit=action(()=>load(true));
+async function loadReview(){const d=await request('/api/rules');el('review-candidates').replaceChildren();(d.review_candidates||[]).forEach(r=>line(el('review-candidates'),r.alias+' → '+r.category+' / '+r.standard+' · 待审核，不生效 · '+r.reason,'p'));}
+el('reset').onclick=()=>{HTMLFormElement.prototype.reset.call(el('editor'));el('edit_id').value='';};
+el('newAlias').onclick=()=>{el('reset').click();$('#aliasEditorModal').modal('show');};
+let aliasTarget=null,aliasBusy=false;
+function queueAliasAction(row,operation){aliasTarget={row,operation};el('aliasActionIdentity').textContent=operation+' · '+row.alias+' → '+row.standard+' · '+row.id;el('aliasActionCheck').checked=false;el('aliasActionSubmit').disabled=true;el('aliasActionError').textContent='';$('#aliasActionModal').modal('show');}
+el('aliasActionCheck').onchange=()=>{el('aliasActionSubmit').disabled=aliasBusy||!el('aliasActionCheck').checked;};
+el('aliasActionSubmit').onclick=async()=>{if(aliasBusy||!aliasTarget||!el('aliasActionCheck').checked)return;aliasBusy=true;el('aliasActionSubmit').disabled=true;try{const {row,operation}=aliasTarget;await request('/api/rules/aliases',operation==='delete'?{action:'delete',id:row.id}:{action:'update',id:row.id,status:operation});$('#aliasActionModal').modal('hide');await load();}catch(e){el('aliasActionError').textContent=e.message;}finally{aliasBusy=false;el('aliasActionSubmit').disabled=!el('aliasActionCheck').checked;}};
+el('editor').onsubmit=action(async()=>{const id=el('edit_id').value;const body={action:id?'update':'create'};if(id)body.id=id;else body.type=el('edit_type').value;['alias','standard','category'].forEach(k=>body[k]=el('edit_'+k).value);await request('/api/rules/aliases',body);el('reset').click();$('#aliasEditorModal').modal('hide');el('notice').textContent='已保存，等待审核';await load();});
+el('test').onclick=action(async()=>{el('test').disabled=true;try{const d=await request('/api/rules/test',{text:el('text').value});el('result').replaceChildren();line(el('result'),'AI：未调用（固定本地测试）','h3');line(el('result'),'收件人：'+(d.contact.recipient||'缺失')+'；电话：'+(d.contact.phone||'缺失')+'；地址：'+(d.contact.address||'缺失'));d.items.forEach(i=>line(el('result'),'分类：'+(i.resolved_category||'未匹配')+'；商品：'+(i.resolved_flavor||i.raw_name)+'；数量：'+i.quantity+'；词典路径：'+i.resolve_reason));d.rule_hits.forEach(h=>line(el('result'),'规则：'+h.rule+' · '+JSON.stringify(h.evidence)));d.diagnostics.forEach(v=>line(el('result'),'诊断：'+v));line(el('result'),d.scope);}finally{el('test').disabled=false;}});
+action(()=>load())();
+action(()=>loadReview())();
+</script>
+{% endblock %}

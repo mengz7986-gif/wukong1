@@ -1,0 +1,25 @@
+[Unit]
+Description=Newbot future cancellation and account notices only
+After=network-online.target newbot-backend.service
+ConditionPathExists=/etc/newbot/cancel-notices-policy.json
+
+[Service]
+User=newbot
+Group=newbot
+WorkingDirectory=/opt/newbot/current/legacy_app
+ExecStart=/opt/newbot/venv/bin/python /opt/newbot/current/deployment/newbot/start_cancel_notices.py
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/newbot /var/log/newbot /var/cache/newbot /opt/newbot/current/legacy_app
+MemoryMax=128M
+TasksMax=16
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

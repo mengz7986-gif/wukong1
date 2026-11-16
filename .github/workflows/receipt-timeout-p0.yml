@@ -1,0 +1,49 @@
+name: Receipt timeout P0 isolated Linux
+on:
+  push:
+    branches: [codex/receipt-timeout-p0-20261103]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  timeout-p0:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -r tests/four_specials_requirements.txt
+      - name: Timeout, Web read projection and 36 independent holds
+        run: |
+          mkdir -p test-results
+          node --check legacy_app/static/js/orders.js
+          node --check legacy_app/static/js/order_detail.js
+          python -m pytest tests/test_receipt_timeout_p0.py tests/test_timeout36_hold.py -q --disable-warnings --junitxml=test-results/timeout-p0.xml
+          python -m pytest tests/test_six_unknown_hold.py tests/test_frozen_direct_receipts.py tests/test_exact_receipt_hold.py tests/test_cancel_notice_hold.py -q --disable-warnings --junitxml=test-results/existing-safety.xml
+          python -m pytest tests/test_receipt_speed.py -k 'timeout_not_retried or direct_timeout or success_ack_followed or full_multipart or audit_failure_after_ack' -q --disable-warnings --junitxml=test-results/affected-receipt.xml
+          git diff --exit-code fca8f15 HEAD -- legacy_app/models.py legacy_app/execution_safety.py legacy_app/telegram_order_queue.py legacy_app/telegram_queue_runtime.py legacy_app/order_parser.py legacy_app/local_fulfillment.py legacy_app/frozen_direct_receipts.py legacy_app/cancel_notice_hold.py legacy_app/p0_recovery_protection.py
+      - name: Compatible rollback retains new exact holds, never restores DB
+        run: |
+          mkdir -p "$RUNNER_TEMP/rollback-fca8f15"
+          git archive fca8f15 | tar -x -C "$RUNNER_TEMP/rollback-fca8f15"
+          cp legacy_app/timeout_receipt_hold.py legacy_app/six_unknown_receipt_hold.py legacy_app/receipt_review_gate.py "$RUNNER_TEMP/rollback-fca8f15/legacy_app/"
+          cp tests/test_timeout36_hold.py "$RUNNER_TEMP/rollback-fca8f15/tests/"
+          python -m pytest "$RUNNER_TEMP/rollback-fca8f15/tests/test_timeout36_hold.py" "$RUNNER_TEMP/rollback-fca8f15/tests/test_six_unknown_hold.py" "$RUNNER_TEMP/rollback-fca8f15/tests/test_frozen_direct_receipts.py" "$RUNNER_TEMP/rollback-fca8f15/tests/test_cancel_notice_hold.py" -q --disable-warnings --junitxml=test-results/compatible-rollback.xml
+      - name: Same-load normal ACK comparison, explicitly simulated Telegram
+        run: |
+          mkdir -p "$RUNNER_TEMP/baseline-fca8f15"
+          git archive fca8f15 | tar -x -C "$RUNNER_TEMP/baseline-fca8f15"
+          python tests/benchmark_receipt_ack.py --source "$RUNNER_TEMP/baseline-fca8f15" --scenario single --samples 12 --output "$GITHUB_WORKSPACE/test-results/baseline-normal.json" > test-results/baseline-normal.log 2>&1
+          python tests/benchmark_receipt_ack.py --scenario single --samples 12 --output "$GITHUB_WORKSPACE/test-results/candidate-normal.json" > test-results/candidate-normal.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: receipt-timeout-p0-evidence
+          path: test-results/

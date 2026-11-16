@@ -1,0 +1,38 @@
+name: Exact cancellation 15920 isolated safety
+on:
+  push:
+    branches: [codex/cancel-15920-hold-20261103]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cancellation-hold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tests/four_specials_requirements.txt
+      - name: Exact event, pending recovery, direct sender, faults and independent notices
+        run: |
+          mkdir -p test-results
+          python -m pytest tests/test_cancel_notice_hold.py tests/test_future_account_notices.py tests/test_notification_routing.py -q --disable-warnings --junitxml=test-results/cancellation.xml
+          python -m pytest tests/test_six_unknown_hold.py -k transport_guard_and_legitimate_notice_same_order -q --disable-warnings --junitxml=test-results/affected-six-notice.xml
+          python -m pytest tests/test_receipt_speed.py -k 'timeout_not_retried or direct_timeout or success_ack_followed or full_multipart or audit_failure_after_ack' -q --disable-warnings --junitxml=test-results/affected-sender.xml
+          echo 'Reuse fb8611a 52 checks and safety-preserving rollback33; unchanged order, parser, stock, FIFO, accounting, split and original 92 policies. No production delivery evidence claimed.' > test-results/reused-evidence.txt
+      - name: Safety-preserving old-business rollback with both exact protections
+        run: |
+          python tools/build_cancel_hold_rollback.py --output "$RUNNER_TEMP/guarded-rollback" --evidence test-results
+          cd "$RUNNER_TEMP/guarded-rollback"
+          python -m pytest tests/test_cancel_notice_hold.py tests/test_future_account_notices.py tests/test_notification_routing.py -q --disable-warnings --junitxml="$GITHUB_WORKSPACE/test-results/rollback-cancellation.xml"
+          python -m pytest tests/test_six_unknown_hold.py -k transport_guard_and_legitimate_notice_same_order -q --disable-warnings --junitxml="$GITHUB_WORKSPACE/test-results/rollback-affected-six.xml"
+          python -m pytest tests/test_receipt_speed.py -k 'timeout_not_retried or direct_timeout or success_ack_followed or full_multipart or audit_failure_after_ack' -q --disable-warnings --junitxml="$GITHUB_WORKSPACE/test-results/rollback-affected-sender.xml"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cancel-15920-isolated-evidence
+          path: test-results/

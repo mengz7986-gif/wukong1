@@ -1,0 +1,51 @@
+name: Full order chain P95 isolated Linux
+on:
+  push:
+    branches: [fix/p95-full-chain-20261102]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-chain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tests/four_specials_requirements.txt
+      - name: Additional full-chain, SQL bounds, duplicate, receipt and cancellation coverage
+        run: |
+          mkdir -p test-results
+          python -m pytest tests/test_full_chain_latency.py -q --junitxml=test-results/full-chain-tests.xml
+      - name: Extract previous candidate; retain original 41-test evidence
+        run: |
+          mkdir -p "$RUNNER_TEMP/baseline-4de0288"
+          git archive 4de0288ef001e9fbc01b7342154d906f0f2e3ca4 | tar -x -C "$RUNNER_TEMP/baseline-4de0288"
+      - name: Same-runner whole-chain before and after
+        run: |
+          python tests/benchmark_full_chain.py --source "$RUNNER_TEMP/baseline-4de0288" --samples 32 --output "$GITHUB_WORKSPACE/test-results/full-before.json"
+          python tests/benchmark_full_chain.py --samples 32 --output "$GITHUB_WORKSPACE/test-results/full-after.json"
+      - name: Bounded four-worker pressure
+        run: python tests/benchmark_full_chain.py --samples 16 --concurrency 4 --output "$GITHUB_WORKSPACE/test-results/full-pressure.json"
+      - name: Check goals and financial effects
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('test-results/full-after.json'))
+          assert d['parser']['p95_ms']<=2000,d['parser']
+          assert d['persist_to_commit']['p95_ms']<=5000,d['persist_to_commit']
+          for path,n in [('full-after.json',32),('full-pressure.json',16)]:
+              row=json.load(open('test-results/'+path))
+              assert row['orders']==row['receipt_acks']==n and row['fifo_stock_consistent']
+              assert row['pool_checked_out']==0,row
+              assert row['peak_active_leases']<=2,row['peak_active_leases']
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-chain-p95-evidence
+          path: test-results/

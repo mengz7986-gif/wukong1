@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}库存图片设置 - 彩虹仓{% endblock %}
+{% block page_heading %}库存图片设置{% endblock %}
+{% block content %}
+<div class="sk-table-card p-3">
+<h1 class="h4">库存图片设置</h1>
+<p><a href="/admin/warehouses">返回仓库管理</a> · <strong id="warehouseName"></strong></p>
+<p>每仓独立设置：库存≤红色上限为红色；库存≥绿色起点为绿色；中间自动为黄色。开启零库存显示时，全部有效分类/口味都会显示。</p>
+<p id="status"></p><p id="notice" role="status"></p>
+<form id="settings">
+<fieldset class="row g-3" {% if not can_manage %}disabled{% endif %}>
+<label class="col-md-4">中文品牌<input name="inventory_image_brand_title" class="form-control" maxlength="500"></label>
+<label class="col-md-4">英文品牌<input name="inventory_image_brand_subtitle" class="form-control" maxlength="500"></label>
+<label class="col-md-4">图片标题<input name="inventory_image_title" class="form-control" maxlength="500"></label>
+<label class="col-md-4">菜单备注<textarea name="inventory_image_menu_note" class="form-control" maxlength="500" rows="4"></textarea></label>
+<label class="col-md-4">库存说明<textarea name="inventory_image_description" class="form-control" maxlength="500" rows="4"></textarea></label>
+<label class="col-md-4">底部备注<textarea name="inventory_image_footer_note" class="form-control" maxlength="500" rows="4"></textarea></label>
+<label class="col-md-4">JPEG质量<input name="inventory_image_jpeg_quality" class="form-control" type="number" min="80" max="100"></label>
+<label class="col-md-4">红色库存上限<input name="inventory_image_red_max" class="form-control" type="number" min="0"></label>
+<label class="col-md-4">绿色库存起点<input name="inventory_image_green_min" class="form-control" type="number" min="1"></label>
+<label class="col-md-4">零库存显示<select name="inventory_image_show_zero" class="form-select"><option value="1">显示</option><option value="0">隐藏</option></select></label>
+<label class="col-md-4">库存数字（图片统一隐藏，保留历史设置）<select disabled name="inventory_image_show_quantity" class="form-select"><option value="yellow">仅黄色显示</option><option value="0">全部隐藏（兼容）</option><option value="1">全部显示（兼容）</option></select></label>
+<label class="col-md-4">图片开关<select name="inventory_image_enabled" class="form-select"><option value="1">开启</option><option value="0">关闭</option></select></label>
+<div class="col-12"><button class="btn btn-primary">保存</button></div>
+</fieldset></form>
+{% if not can_manage %}<p>当前安全门禁锁定设置修改和缓存清理；可以查看并测试预览。</p>{% endif %}
+<div class="mt-3"><select id="warehouse"><option value="">选择测试预览仓库</option></select>
+<button id="preview" class="btn btn-outline-primary">预览图片</button>
+<button id="clear" class="btn btn-outline-danger" {% if not can_manage %}disabled{% endif %}>清除库存图片缓存</button></div>
+<p>测试预览仅生成图片，不发送 Telegram 消息，不修改库存。</p>
+</div>
+<div class="modal fade" id="inventoryPreviewModal" tabindex="-1" aria-labelledby="inventoryPreviewTitle"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header"><h5 id="inventoryPreviewTitle" class="modal-title">当前仓库库存图片</h5><button class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button></div><div class="modal-body text-center"><div class="d-flex justify-content-center gap-3 mb-3"><button id="previewPrev" class="btn btn-sm btn-outline-secondary" disabled>上一页</button><span id="previewPageLabel" class="align-self-center"></span><button id="previewNext" class="btn btn-sm btn-outline-secondary" disabled>下一页</button></div><img id="image" alt="库存测试预览" style="max-width:100%"></div></div></div></div>
+<div class="modal fade" id="clearCacheModal" tabindex="-1" aria-labelledby="clearCacheTitle"><div class="modal-dialog"><div class="modal-content">
+<div class="modal-header"><h5 id="clearCacheTitle" class="modal-title">清除库存图片缓存</h5><button class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button></div>
+<div class="modal-body"><p>仅清理当前仓库库存图片缓存，不影响其他仓库，不修改库存或成本。下次预览会重新生成 JPEG。</p>
+<label for="cacheConfirmation">输入：清除库存图片缓存</label><input id="cacheConfirmation" class="form-control" autocomplete="off">
+<label class="mt-3"><input type="checkbox" id="cacheConfirmAgain"> 二次确认：仅清理库存图片缓存</label><p id="cacheError" class="text-danger" role="alert"></p></div>
+<div class="modal-footer"><button id="submitCacheClear" type="button" class="btn btn-danger" disabled>确认清除</button></div></div></div></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const csrf={{ inventory_csrf|tojson }}, notice=document.getElementById('notice');
+let selectedWarehouse={{ image_warehouse_id|default(none)|tojson }};
+function imageApi(){if(!selectedWarehouse)throw Error('请选择仓库');return '/api/warehouses/'+selectedWarehouse+'/inventory-image';}
+async function post(path, body){const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Inventory-CSRF':csrf},body:JSON.stringify(body)});if(!r.ok){const d=await r.json().catch(()=>({}));throw Error(typeof d.detail==='string'?d.detail:'图片请求失败，请检查设置后重试');}return r;}
+async function load(){const r=await fetch(imageApi(),{cache:'no-store'});if(!r.ok)throw Error('读取设置失败');const d=await r.json();Object.entries(d.settings).forEach(([k,v])=>{const n=document.querySelector('[name="'+k+'"]');if(n)n.value=v;});document.getElementById('status').textContent='红 ≤'+d.red_max+' / 黄 '+(d.red_max+1)+'–'+d.yellow_max+' / 绿 ≥'+d.green_min+' · 当前仓库缓存 '+d.cache_count+' 张';}
+async function safe(fn){try{await fn();}catch(e){notice.textContent=e.message;}}
+document.getElementById('settings').onsubmit=e=>{e.preventDefault();safe(async()=>{await post(imageApi(),Object.fromEntries(new FormData(e.target)));notice.textContent='当前仓库设置已保存';await load();});};
+let previewUrl,previewPage=1,previewPageCount=1,previewSettings=null,previewWarehouse=null;
+async function showPreviewPage(page){
+ const r=await post('/api/warehouses/'+previewWarehouse+'/inventory-image/preview',{settings:previewSettings,page});
+ const blob=await r.blob();if(blob.type!=='image/jpeg'||!blob.size)throw Error('图片返回异常，请稍后重试');
+ const nextUrl=URL.createObjectURL(blob),img=document.getElementById('image');
+ try{await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('图片加载失败，请重试'));img.src=nextUrl;});}catch(error){URL.revokeObjectURL(nextUrl);throw error;}
+ if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=nextUrl;previewPage=Number(r.headers.get('X-Inventory-Page'))||page;previewPageCount=Number(r.headers.get('X-Inventory-Pages'))||1;
+ document.getElementById('previewPageLabel').textContent='第 '+previewPage+' / '+previewPageCount+' 页';
+ document.getElementById('previewPrev').disabled=previewPage<=1;document.getElementById('previewNext').disabled=previewPage>=previewPageCount;
+ bootstrap.Modal.getOrCreateInstance(document.getElementById('inventoryPreviewModal')).show();
+}
+document.getElementById('preview').onclick=()=>safe(async()=>{const button=document.getElementById('preview');button.disabled=true;notice.textContent='正在生成预览';try{previewSettings=Object.fromEntries(new FormData(document.getElementById('settings')));previewWarehouse=selectedWarehouse;await showPreviewPage(1);notice.textContent='预览已生成（未保存设置、不发送Telegram）';}finally{button.disabled=false;}});
+for(const [id,direction] of [['previewPrev',-1],['previewNext',1]])document.getElementById(id).onclick=()=>safe(async()=>{document.getElementById('previewPrev').disabled=true;document.getElementById('previewNext').disabled=true;try{await showPreviewPage(previewPage+direction);}finally{document.getElementById('previewPrev').disabled=previewPage<=1;document.getElementById('previewNext').disabled=previewPage>=previewPageCount;}});
+
+let clearing=false;
+function validateCacheClear(){document.getElementById('submitCacheClear').disabled=clearing||document.getElementById('cacheConfirmation').value!=='清除库存图片缓存'||!document.getElementById('cacheConfirmAgain').checked;}
+document.getElementById('clear').onclick=()=>{document.getElementById('cacheConfirmation').value='';document.getElementById('cacheConfirmAgain').checked=false;document.getElementById('cacheError').textContent='';validateCacheClear();$('#clearCacheModal').modal('show');};
+document.getElementById('cacheConfirmation').oninput=()=>{document.getElementById('cacheConfirmAgain').checked=false;validateCacheClear();};
+document.getElementById('cacheConfirmAgain').onchange=validateCacheClear;
+document.getElementById('submitCacheClear').onclick=async()=>{if(document.getElementById('submitCacheClear').disabled)return;clearing=true;validateCacheClear();try{const r=await post(imageApi()+'/clear-cache',{confirmation:document.getElementById('cacheConfirmation').value});const d=await r.json();notice.textContent='已清除当前仓库 '+d.removed_files+' 个缓存文件';$('#clearCacheModal').modal('hide');await load();}catch(e){document.getElementById('cacheError').textContent=e.message;}finally{clearing=false;validateCacheClear();}};
+document.getElementById('warehouse').onchange=e=>{selectedWarehouse=Number(e.target.value)||null;document.getElementById('warehouseName').textContent=e.target.selectedOptions[0].textContent;document.getElementById('image').removeAttribute('src');safe(load);};
+safe(async()=>{const r=await fetch('/api/warehouses');if(!r.ok)throw Error('读取仓库失败');for(const w of await r.json()){const o=document.createElement('option');o.value=w.id;o.textContent=w.name;document.getElementById('warehouse').append(o);if(w.id===selectedWarehouse)document.getElementById('warehouseName').textContent=w.name;}if(selectedWarehouse){document.getElementById('warehouse').value=selectedWarehouse;await load();}});
+</script>
+{% endblock %}

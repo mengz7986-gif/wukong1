@@ -1,0 +1,39 @@
+name: Worker claim tail isolated Linux
+on:
+  push:
+    branches: [fix/worker-claim-tail-20261102]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  claim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tests/four_specials_requirements.txt
+      - name: Changed claim path, ordering, recovery and historical receipt protection
+        run: |
+          mkdir -p test-results
+          python -m pytest tests/test_worker_claim_tail.py tests/test_real_tail_delta.py -k 'worker_claim_tail or claim_lease or explicit_queue' -q --disable-warnings --junitxml=test-results/claim.xml
+          python -m pytest tests/test_four_specials_pipeline.py -k 'durable_duplicate or different_messages or late_expired or concurrent_same_message or pool_sessions or restart or process_exit or failed_receipt' -q --disable-warnings --junitxml=test-results/recovery.xml
+          python -m pytest tests/test_frozen_direct_receipts.py tests/test_exact_receipt_hold.py -q --disable-warnings --junitxml=test-results/holds.xml
+          echo 'Reuse prior Linux24 / 41412225563; unchanged normalization, dictionary51 and503 catalog evidence. Only affected claim/recovery checks rerun.' > test-results/reused-evidence.txt
+      - name: Same load with historical queue, existing eight workers and four per chat
+        run: |
+          mkdir -p "$RUNNER_TEMP/base-2a"
+          git archive 2a7d13327433b14d6678cb98d7bda8c208dbf51f | tar -x -C "$RUNNER_TEMP/base-2a"
+          for chats in 1 4; do
+            python tests/benchmark_real_receipt_tail.py --source "$RUNNER_TEMP/base-2a" --samples 16 --history 750 --queue-history 15500 --chats "$chats" --output "$GITHUB_WORKSPACE/test-results/before-chat$chats.json"
+            python tests/benchmark_real_receipt_tail.py --samples 16 --history 750 --queue-history 15500 --chats "$chats" --output "$GITHUB_WORKSPACE/test-results/after-chat$chats.json"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: worker-claim-tail-evidence
+          path: test-results/

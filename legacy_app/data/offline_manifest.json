@@ -1,0 +1,13 @@
+{
+  "snapshot_id": "a251aea358800b539875f5de0ffc4d562a0d074d12d43d43655c0114ffcd15f0",
+  "provinces": 33,
+  "cities": 369,
+  "regions": 2813,
+  "street_names": 30169,
+  "broken_city_parents": 0,
+  "broken_region_parents": 0,
+  "format": 1,
+  "label": "Local installed administrative snapshot",
+  "installed_on": "2026-10-22",
+  "freshness": "Existing checked-in dataset; not a claim of latest official administrative status"
+}

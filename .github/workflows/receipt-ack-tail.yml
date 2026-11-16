@@ -1,0 +1,57 @@
+name: Group receipt ACK tail isolated Linux
+on:
+  push:
+    branches: [fix/receipt-ack-tail-20261102]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  receipt-ack:
+    if: ${{ !contains(github.event.head_commit.message, '[evidence-only]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tests/four_specials_requirements.txt
+      - name: Affected receipt, callback, historical hold and full-handler regression
+        run: |
+          mkdir -p test-results
+          python -m pytest tests/test_receipt_speed.py tests/test_frozen_direct_receipts.py tests/test_exact_receipt_hold.py -q --disable-warnings --junitxml=test-results/receipt-tests.xml
+          python -m pytest tests/test_full_chain_latency.py -k 'real_http_handler or full_handler_bounded or cpu_prevalidation' -q --disable-warnings --junitxml=test-results/affected-chain-tests.xml
+      - name: Extract undeployed previous candidate
+        run: |
+          mkdir -p "$RUNNER_TEMP/baseline-18e53ae"
+          git archive 18e53aeff03891f27945f7ad1a9cbe87d2366e69 | tar -x -C "$RUNNER_TEMP/baseline-18e53ae"
+      - name: Same samples and load; simulated HTTP ACK, never real Telegram
+        run: |
+          for scenario in single multi group4 same_customer4; do
+            python tests/benchmark_receipt_ack.py --source "$RUNNER_TEMP/baseline-18e53ae" --scenario "$scenario" --samples 20 --output "$GITHUB_WORKSPACE/test-results/before-$scenario.json"
+            python tests/benchmark_receipt_ack.py --scenario "$scenario" --samples 20 --output "$GITHUB_WORKSPACE/test-results/after-$scenario.json"
+          done
+          python tests/benchmark_receipt_ack.py --scenario multi --samples 20 --arrival-seconds .5 --output "$GITHUB_WORKSPACE/test-results/after-overload.json"
+      - name: Record goal outcomes; do not hide missed performance goals
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          rows={p.stem:json.loads(p.read_text()) for p in Path('test-results').glob('*.json')}
+          outcomes={}
+          for name,row in rows.items():
+              assert row['orders']==row['acknowledged_receipts'] and row['fifo_stock_consistent']
+              assert row['pool_checked_out']==0
+              goal=3000 if row['scenario']=='single' else 5000 if row['scenario']=='multi' else 8000
+              measured=row['last_ack_since_first_source_ms'] if row['scenario'].endswith('4') else row['source_to_complete_ack']['p95_ms']
+              outcomes[name]={'simulated':True,'goal_ms':goal,'measured_ms':measured,'met':measured<=goal}
+          Path('test-results/goal-outcomes.json').write_text(json.dumps(outcomes,indent=2))
+          print(json.dumps(outcomes,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: receipt-ack-tail-evidence
+          path: test-results/

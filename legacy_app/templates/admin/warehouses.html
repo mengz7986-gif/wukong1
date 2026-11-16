@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}仓库管理 - 彩虹仓{% endblock %}
+
+{% block content %}
+<div class="pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-warehouse"></i> 仓库管理
+    </h1>
+</div>
+
+<div class="card mb-3"><div class="card-body">
+    <h5>自动分仓设置</h5>
+    <p class="text-muted">能整单配齐优先整单。关闭库存优先：按各仓当个自然日的全部有效订单调整比例（每天00:00重新计数，UTC+8；不限产品，取消订单不计，拆包计一次）。开启：优先选择本单最紧缺口味库存覆盖更充足的仓库，库存相同时再按比例。</p>
+    <div id="routing-weights"></div>
+    <label class="mt-2"><input type="checkbox" id="routing-stock-priority"> 库存优先（优先于订单比例）</label>
+    <button class="btn btn-primary ms-3" onclick="saveRoutingPolicy()">保存分仓设置</button>
+    <p class="text-muted mt-2">无法整单配齐但可跨仓配齐时，请客户确认分单或取消；确认前不创建订单、不扣库存。修改仅影响后续订单。</p>
+</div></div>
+<div class="card">
+    <div class="card-body">
+        <div id="loading" class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+        </div>
+        <div id="warehouses-content" style="display: none;">
+            <div class="sk-table-wrap"><table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>仓库名称</th>
+                        <th>地址</th>
+                        <th>运费（¥）</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="warehouses-tbody">
+                </tbody>
+            </table></div>
+            <div class="mt-3">
+                <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addWarehouseModal">
+                    <i class="fas fa-plus"></i> 添加仓库
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加仓库模态框 -->
+<div class="modal fade" id="addWarehouseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">添加仓库</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addWarehouseForm">
+                    <div class="mb-3">
+                        <label for="warehouseName" class="form-label">仓库名称</label>
+                        <input type="text" class="form-control" id="warehouseName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="warehouseAddress" class="form-label">地址</label>
+                        <textarea class="form-control" id="warehouseAddress" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="shippingFee" class="form-label">运费（¥）</label>
+                        <input type="number" class="form-control" id="shippingFee" step="0.01" value="0" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="addWarehouse()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑仓库模态框 -->
+<div class="modal fade" id="editWarehouseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">编辑仓库</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editWarehouseForm">
+                    <input type="hidden" id="editWarehouseId">
+                    <div class="mb-3">
+                        <label for="editWarehouseName" class="form-label">仓库名称</label>
+                        <input type="text" class="form-control" id="editWarehouseName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editWarehouseAddress" class="form-label">地址</label>
+                        <textarea class="form-control" id="editWarehouseAddress" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editShippingFee" class="form-label">运费（¥）</label>
+                        <input type="number" class="form-control" id="editShippingFee" step="0.01" value="0" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateWarehouse()">更新</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/warehouses.js?v=20261022-routing-2"></script>
+{% endblock %}

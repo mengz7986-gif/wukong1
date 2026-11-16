@@ -1,0 +1,62 @@
+name: Real receipt tail P0 isolated evidence
+on:
+  push:
+    branches: [fix/real-receipt-tail-p0-20261102]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tests/four_specials_requirements.txt
+      - name: Changed normalization, quota facts, leases and failure recovery
+        run: |
+          mkdir -p test-results
+          python -m pytest tests/test_real_tail_delta.py tests/test_four_specials_pipeline.py -q --disable-warnings --junitxml=test-results/quota-lease.xml
+          python -m pytest tests/test_full_chain_latency.py -k 'cpu_prevalidation or real_http_handler' -q --disable-warnings --junitxml=test-results/affected-chain.xml
+          echo 'Reuse 51 checks and 503 catalog identities from candidate 2864036 / run 41406409831; no dictionary change.' > test-results/reused-evidence.txt
+      - name: Identical history and actual production worker bounds
+        run: |
+          mkdir -p "$RUNNER_TEMP/base-2864036"
+          git archive 286403687cb26bf9382bbfd6cfdcf1737b2d5dd5 | tar -x -C "$RUNNER_TEMP/base-2864036"
+          for chats in 1 4; do
+            python tests/benchmark_real_receipt_tail.py --source "$RUNNER_TEMP/base-2864036" --samples 16 --history 750 --chats "$chats" --output "$GITHUB_WORKSPACE/test-results/before-chat$chats.json"
+            python tests/benchmark_real_receipt_tail.py --samples 16 --history 750 --chats "$chats" --output "$GITHUB_WORKSPACE/test-results/after-chat$chats.json"
+          done
+      - name: Above rolling Telegram budget, preserve pacing rather than bypass
+        run: |
+          python tests/benchmark_real_receipt_tail.py --source "$RUNNER_TEMP/base-2864036" --samples 24 --history 750 --output "$GITHUB_WORKSPACE/test-results/before-overload24.json"
+          python tests/benchmark_real_receipt_tail.py --samples 24 --history 750 --output "$GITHUB_WORKSPACE/test-results/after-overload24.json"
+      - name: Record measured improvement and invariants without hiding misses
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          summary={}
+          for before_path in Path('test-results').glob('before-*.json'):
+              after_path=before_path.with_name(before_path.name.replace('before-','after-'))
+              before=json.loads(before_path.read_text());after=json.loads(after_path.read_text())
+              for row in (before,after):
+                  assert row['orders']==row['acks']==row['samples']
+                  assert row['fifo_consistent'] and row['pool_checked_out']==0 and row['peak_active_leases']<=8
+              summary[before_path.stem.removeprefix('before-')]={
+                  'simulated_ack':True,'before_source_ack_p95_ms':before['source_to_ack']['p95_ms'],
+                  'after_source_ack_p95_ms':after['source_to_ack']['p95_ms'],
+                  'before_writer_hold_p95_ms':before['writer_hold']['p95_ms'],
+                  'after_writer_hold_p95_ms':after['writer_hold']['p95_ms']}
+          Path('test-results/comparison.json').write_text(json.dumps(summary,indent=2))
+          print(json.dumps(summary,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-receipt-p0-evidence
+          path: test-results/

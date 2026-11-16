@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}福袋管理 - 彩虹仓{% endblock %}
+{% block content %}
+<h2 class="mt-3">{{ category_name }} · 福袋管理</h2>
+<p class="text-muted">所属逻辑分类：{{ category_name }} · 全后台共用配置，跨仓无需重复创建。</p>
+<p class="text-muted">库存模式二选一：扣现有口味库存继续使用原商品FIFO；独立库存按份数及独立成本批次扣减，不动组成口味库存。独立库存绑定所属分类仓库；全部包邮。已有成交或库存流水禁止直接切换模式。</p>
+<div id="bundleError" class="alert alert-danger" hidden></div>
+<div class="card p-3 mb-3"><h5>全后台福袋运费/分单规则</h5>
+<div class="d-flex gap-3 align-items-center"><span>运费方式：包邮 ¥0</span><label>每笔最多 <input id="bundleLimit" type="number" min="1" value="1" style="width:70px"> 份</label><button id="saveLimit" class="btn btn-outline-primary">保存规则</button></div></div>
+<div class="d-flex justify-content-between align-items-center mb-2"><h5 class="mb-0">已有福袋</h5><button id="newBundle" class="btn btn-primary" type="button">新增福袋</button></div>
+<div id="bundleList" class="mb-3"></div>
+<form id="bundleForm" class="card p-3">
+<h5 id="bundleFormTitle">新增福袋</h5><input id="bundleId" type="hidden">
+<div class="row g-3"><div class="col-md-6"><label class="form-label">独立福袋名称</label><input id="bundleName" class="form-control" required maxlength="100"></div>
+<div class="col-md-6"><label class="form-label">其他叫法（每行一个）</label><textarea id="bundleAliases" class="form-control" rows="2"></textarea></div>
+<div class="col-md-4"><label class="form-label">配货方式</label><select id="bundleMode" class="form-select"><option value="fixed">固定搭配</option><option value="random">随机搭配</option><option value="custom">客户自选</option></select></div>
+<div class="col-md-4"><label class="form-label">库存模式</label><select id="bundleStockMode" class="form-select" required><option value="components">扣现有口味库存</option><option value="independent">独立库存</option></select></div>
+<div class="col-md-4"><label class="form-label">每份进货价（仅独立库存成本，不改变售价）</label><input id="bundleCost" class="form-control" type="number" min="0" step="0.01" value="0" required></div>
+<div class="col-md-4"><label class="form-label">每份总支数</label><input id="bundleUnits" class="form-control" type="number" min="1" value="6" required></div>
+<div class="col-md-4"><label class="form-label">单口味最多支数</label><input id="bundleMax" class="form-control" type="number" min="1" value="6" required></div>
+<div class="col-md-4"><label class="form-label">VIP售价</label><input id="bundleRegular" class="form-control" type="number" min="0" step="0.01" required></div>
+<div class="col-md-4"><label class="form-label">合伙人售价（不填沿用VIP）</label><input id="bundleLevel1" class="form-control" type="number" min="0" step="0.01"></div>
+<div class="col-md-4"><label class="form-label">SVIP售价（不填沿用VIP）</label><input id="bundleLevel2" class="form-control" type="number" min="0" step="0.01"></div></div>
+<div class="d-flex gap-4 my-3"><label><input id="bundleRepeat" type="checkbox" checked> 允许重复口味</label><label><input id="bundleShow" type="checkbox"> 客户回执显示实际口味</label><label><input id="bundleEnabled" type="checkbox"> 保存后启用</label></div>
+<h6>真实口味配置</h6><p class="small text-muted">独立库存 + 固定搭配可以不选口味，按份数及独立成本批次履约，回执不虚构口味。扣现有口味库存仍须配置组成；随机/自选须选择真实口味池。</p><div id="bundleFlavors" class="row g-2"></div>
+<div class="mt-3"><button class="btn btn-primary" type="submit">保存福袋</button><button id="resetBundle" class="btn btn-outline-secondary" type="button">新建另一个福袋</button></div>
+</form>
+<div class="card p-3 mt-3"><h5>当前编辑福袋的独立库存调整</h5><p class="text-muted small">先保存并点击独立福袋的编辑。按份入库或调整出库，保留审计流水；新进货价只作用于新批次。重试使用同一操作标识，未知结果不能换标识重复提交。</p><div class="d-flex gap-2"><select id="bundleStockAction" class="form-select"><option value="in">入库</option><option value="out">调整出库</option></select><input id="bundleStockQuantity" class="form-control" type="number" min="1" placeholder="份数"><button id="adjustBundleStock" class="btn btn-outline-primary text-nowrap" type="button">提交库存调整</button></div><div id="bundleStockResult" class="small mt-2"></div></div>
+<div id="bundleStockAudit" class="card p-3 mt-3 small">点击编辑查看最近50条独立库存审计流水。</div>
+<div class="card p-3 mt-3"><h5>当前编辑福袋的用户单独售价</h5><p class="text-muted small">先选择上方一个福袋点击编辑；这里只维护福袋售价，不改变普通商品单独价格。</p><div class="d-flex gap-2"><input id="bundlePriceUser" class="form-control" type="number" min="1" placeholder="用户ID"><input id="bundlePriceValue" class="form-control" type="number" min="0" step="0.01" placeholder="单独售价"><button id="saveBundleUserPrice" class="btn btn-outline-primary text-nowrap">保存</button><button id="deleteBundleUserPrice" class="btn btn-outline-secondary text-nowrap">恢复等级价</button></div><div id="bundlePriceResult" class="small mt-2"></div></div>
+{% endblock %}
+{% block scripts %}<script>window.bundleCategoryId={{ category_id|tojson }};</script><script src="/static/js/bundles.js?v=20261012-beijing-24h"></script>{% endblock %}

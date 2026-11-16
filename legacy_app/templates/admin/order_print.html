@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}订单打印{% endblock %}
+{% block content %}
+<style>
+@media print {
+  @page { margin: 3mm; }
+  .no-print { display:none !important; }
+  #sidebar, nav, .sidebar, .navbar { display:none !important; }
+  main, .container-fluid, .card { margin:0 !important; padding:0 !important; border:none !important; box-shadow:none !important; }
+  body { margin:0 !important; }
+  #printArea > hr { display:none !important; }
+  .sheet { break-after:page; page-break-after:always; }
+  .sheet:last-child { break-after:auto; page-break-after:auto; }
+  .sheet table, .sheet tr, .sheet td, .sheet th, .sheet .addr, .sheet .sums {
+    break-inside:avoid; page-break-inside:avoid;
+  }
+}
+.sheet { max-width: 800px; margin: 0 auto; font-size: 10.5px; line-height:1.18; color:#111; }
+.sheet .head { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:1px solid #222; padding-bottom:3px; margin-bottom:5px; }
+.sheet .title { font-size:16px; line-height:1; font-weight:700; }
+.sheet .meta { color:#444; }
+.sheet .grid { display:grid; grid-template-columns:1fr 1fr; gap:3px 8px; margin-bottom:4px; }
+.sheet .addr { margin:3px 0 5px; }
+.sheet table { width:100%; border-collapse:collapse; margin-bottom:5px; table-layout:auto; }
+.sheet th, .sheet td { border:1px solid #333; padding:2px 3px; vertical-align:top; }
+.sheet th:first-child, .sheet td:first-child { width:54%; }
+.sheet th { background:#f3f3f3; }
+.sheet td.num, .sheet th.num { text-align:right; }
+.sheet .sums { display:grid; grid-template-columns:1fr 1fr; gap:2px 6px; margin-bottom:4px; }
+.sheet .foot { border-top:1px dashed #666; padding-top:3px; color:#333; }
+.toolbar label { margin-right:8px; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3 no-print">
+  <h1 class="h3 mb-0">订单打印</h1>
+  <div class="toolbar d-flex align-items-center gap-2">
+    <label class="mb-0">模板</label>
+    <select id="tpl" class="form-select form-select-sm" style="width:140px">
+      <option value="shipping">发货单</option>
+      <option value="statement">对账单</option>
+      <option value="simple">简洁文本</option>
+    </select>
+    <button class="btn btn-outline-secondary btn-sm" onclick="loadPrint()">刷新</button>
+    <button class="btn btn-outline-primary btn-sm" onclick="copyText()">复制文本</button>
+    <button class="btn btn-primary btn-sm" onclick="window.print()">打印</button>
+  </div>
+</div>
+<div id="printArea" class="card p-3"><div class="text-muted">加载中...</div></div>
+<pre id="textArea" class="mt-3 p-3 bg-light no-print" style="white-space:pre-wrap"></pre>
+{% endblock %}
+{% block scripts %}
+<script>
+function getQuery(name){
+  return new URL(window.location.href).searchParams.get(name);
+}
+function copyText(){
+  const t = window.__printText || '';
+  navigator.clipboard.writeText(t).then(()=>alert('已复制'));
+}
+function selectedPrintIds(){
+  const raw = getQuery('ids') || getQuery('id') || '';
+  return raw.split(/[,，\s]+/).map(function(x){ return x.trim(); }).filter(function(x){ return /^\d+$/.test(x); });
+}
+function loadPrint(){
+  const ids = selectedPrintIds();
+  const tpl = $('#tpl').val() || 'shipping';
+  if(!ids.length){ $('#printArea').html('<div class="alert alert-warning">缺少订单 id</div>'); return; }
+  $('#printArea').html('<div class="text-muted">加载中...</div>');
+  const reqs = ids.map(function(id){
+    return $.get('/api/orders/' + id + '/print?template=' + encodeURIComponent(tpl));
+  });
+  $.when.apply($, reqs).done(function(){
+    const args = reqs.length === 1 ? [arguments] : arguments;
+    const htmlParts = [];
+    const textParts = [];
+    for (let i = 0; i < args.length; i++) {
+      const resp = args[i][0] || {};
+      if (resp.html) htmlParts.push(resp.html);
+      if (resp.print_text) textParts.push(resp.print_text);
+    }
+    window.__printText = textParts.join('\n\n');
+    $('#printArea').html(htmlParts.join('<hr class="my-4">') || '<div class="alert alert-warning">没有可打印内容</div>');
+    $('#textArea').text(window.__printText || '');
+  }).fail(function(xhr){
+    $('#printArea').html('<div class="alert alert-danger">加载失败: ' + ((xhr.responseJSON&&xhr.responseJSON.detail)||'error') + '</div>');
+  });
+}
+$(function(){
+  const t = getQuery('template');
+  if(t){ $('#tpl').val(t); }
+  $('#tpl').on('change', loadPrint);
+  loadPrint();
+});
+</script>
+{% endblock %}

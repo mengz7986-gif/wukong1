@@ -1,0 +1,674 @@
+[
+  {
+    "code": "140421",
+    "province": "山西省",
+    "city": "长治市",
+    "district": "长治县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "140424",
+    "province": "山西省",
+    "city": "长治市",
+    "district": "屯留县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "610928",
+    "province": "陕西省",
+    "city": "安康市",
+    "district": "旬阳县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "620201402",
+    "province": "甘肃省",
+    "city": "嘉峪关市",
+    "district": "镜铁区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "620201401",
+    "province": "甘肃省",
+    "city": "嘉峪关市",
+    "district": "雄关区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "620201403",
+    "province": "甘肃省",
+    "city": "嘉峪关市",
+    "district": "长城区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "421023",
+    "province": "湖北省",
+    "city": "荆州市",
+    "district": "监利县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "410381",
+    "province": "河南省",
+    "city": "洛阳市",
+    "district": "偃师市",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "341422",
+    "province": "安徽省",
+    "city": "芜湖市",
+    "district": "无为县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "451023",
+    "province": "广西壮族自治区",
+    "city": "百色市",
+    "district": "平果县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "451021",
+    "province": "广西壮族自治区",
+    "city": "百色市",
+    "district": "田阳县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "220381",
+    "province": "吉林省",
+    "city": "四平市",
+    "district": "公主岭市",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "371202",
+    "province": "山东省",
+    "city": "莱芜市",
+    "district": "莱城区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "371203",
+    "province": "山东省",
+    "city": "莱芜市",
+    "district": "钢城区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "542232",
+    "province": "西藏自治区",
+    "city": "山南市",
+    "district": "错那县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "320586",
+    "province": "江苏省",
+    "city": "苏州市",
+    "district": "苏州工业园区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "441901401",
+    "province": "广东省",
+    "city": "东莞市",
+    "district": "松山湖管委会",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "441901402",
+    "province": "广东省",
+    "city": "东莞市",
+    "district": "虎门港管委会",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "441901403",
+    "province": "广东省",
+    "city": "东莞市",
+    "district": "东莞生态园",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "431121",
+    "province": "湖南省",
+    "city": "永州市",
+    "district": "祁阳县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "522423",
+    "province": "贵州省",
+    "city": "毕节市",
+    "district": "黔西县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "610623",
+    "province": "陕西省",
+    "city": "延安市",
+    "district": "子长县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "654223",
+    "province": "新疆维吾尔自治区",
+    "city": "塔城地区",
+    "district": "沙湾县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "410322",
+    "province": "河南省",
+    "city": "洛阳市",
+    "district": "孟津县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "513425",
+    "province": "四川省",
+    "city": "凉山彝族自治州",
+    "district": "会理县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "632825",
+    "province": "青海省",
+    "city": "海西蒙古族藏族自治州",
+    "district": "海西蒙古族藏族自治州直辖",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "411626",
+    "province": "河南省",
+    "city": "周口市",
+    "district": "淮阳县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "410306",
+    "province": "河南省",
+    "city": "洛阳市",
+    "district": "吉利区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "522322",
+    "province": "贵州省",
+    "city": "黔西南布依族苗族自治州",
+    "district": "兴仁县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "370634",
+    "province": "山东省",
+    "city": "烟台市",
+    "district": "长岛县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "370684",
+    "province": "山东省",
+    "city": "烟台市",
+    "district": "蓬莱市",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "500105",
+    "province": "重庆",
+    "city": "重庆市",
+    "district": "江北区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "500112",
+    "province": "重庆",
+    "city": "重庆市",
+    "district": "渝北区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "620824",
+    "province": "甘肃省",
+    "city": "平凉市",
+    "district": "华亭县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "450331",
+    "province": "广西壮族自治区",
+    "city": "桂林市",
+    "district": "荔浦县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "140481",
+    "province": "山西省",
+    "city": "长治市",
+    "district": "潞城市",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "140482",
+    "province": "山西省",
+    "city": "长治市",
+    "district": "城区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "140483",
+    "province": "山西省",
+    "city": "长治市",
+    "district": "郊区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "130223",
+    "province": "河北省",
+    "city": "唐山市",
+    "district": "滦县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "630122",
+    "province": "青海省",
+    "city": "西宁市",
+    "district": "湟中县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "371626",
+    "province": "山东省",
+    "city": "滨州市",
+    "district": "邹平县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "350625",
+    "province": "福建省",
+    "city": "漳州市",
+    "district": "长泰县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "130521",
+    "province": "河北省",
+    "city": "邢台市",
+    "district": "邢台县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "130526",
+    "province": "河北省",
+    "city": "邢台市",
+    "district": "任县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "130527",
+    "province": "河北省",
+    "city": "邢台市",
+    "district": "南和县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "350681",
+    "province": "福建省",
+    "city": "漳州市",
+    "district": "龙海市",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "232724",
+    "province": "黑龙江省",
+    "city": "大兴安岭地区",
+    "district": "加格达奇区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "130503",
+    "province": "河北省",
+    "city": "邢台市",
+    "district": "桥西区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "130502",
+    "province": "河北省",
+    "city": "邢台市",
+    "district": "桥东区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "341822",
+    "province": "安徽省",
+    "city": "宣城市",
+    "district": "广德县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "510132",
+    "province": "四川省",
+    "city": "成都市",
+    "district": "新津县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "430521",
+    "province": "湖南省",
+    "city": "邵阳市",
+    "district": "邵东县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "450127",
+    "province": "广西壮族自治区",
+    "city": "南宁市",
+    "district": "横县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "140726",
+    "province": "山西省",
+    "city": "晋中市",
+    "district": "太谷县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "610322",
+    "province": "陕西省",
+    "city": "宝鸡市",
+    "district": "凤翔县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "360105",
+    "province": "江西省",
+    "city": "南昌市",
+    "district": "湾里区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "460323",
+    "province": "海南省",
+    "city": "三沙市",
+    "district": "中沙群岛的岛礁及其海域",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "460322",
+    "province": "海南省",
+    "city": "三沙市",
+    "district": "南沙群岛",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "460321",
+    "province": "海南省",
+    "city": "三沙市",
+    "district": "西沙群岛",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "542623",
+    "province": "西藏自治区",
+    "city": "林芝市",
+    "district": "米林县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "530630",
+    "province": "云南省",
+    "city": "昭通市",
+    "district": "水富县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "340221",
+    "province": "安徽省",
+    "city": "芜湖市",
+    "district": "芜湖县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "340222",
+    "province": "安徽省",
+    "city": "芜湖市",
+    "district": "繁昌县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "320611",
+    "province": "江苏省",
+    "city": "南通市",
+    "district": "港闸区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "340208",
+    "province": "安徽省",
+    "city": "芜湖市",
+    "district": "三山区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "652923",
+    "province": "新疆维吾尔自治区",
+    "city": "阿克苏地区",
+    "district": "库车县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "430221",
+    "province": "湖南省",
+    "city": "株洲市",
+    "district": "株洲县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "360727",
+    "province": "江西省",
+    "city": "赣州市",
+    "district": "龙南县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "231121",
+    "province": "黑龙江省",
+    "city": "黑河市",
+    "district": "嫩江县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "350402",
+    "province": "福建省",
+    "city": "三明市",
+    "district": "梅列区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "350427",
+    "province": "福建省",
+    "city": "三明市",
+    "district": "沙县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "532331",
+    "province": "云南省",
+    "city": "楚雄彝族自治州",
+    "district": "禄丰县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "361121",
+    "province": "江西省",
+    "city": "上饶市",
+    "district": "上饶县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "510922",
+    "province": "四川省",
+    "city": "遂宁市",
+    "district": "射洪县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "320684",
+    "province": "江苏省",
+    "city": "南通市",
+    "district": "海门市",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230710",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "五营区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230716",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "上甘岭区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230715",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "红星区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230714",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "乌伊岭区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230713",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "带岭区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230712",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "汤旺河区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230711",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "乌马河区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230709",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "金山屯区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230708",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "美溪区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230707",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "新青区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230706",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "翠峦区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230705",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "西林区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230703",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "南岔区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "230702",
+    "province": "黑龙江省",
+    "city": "伊春市",
+    "district": "伊春区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "410728",
+    "province": "河南省",
+    "city": "新乡市",
+    "district": "长垣县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "371523",
+    "province": "山东省",
+    "city": "聊城市",
+    "district": "茌平县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "520221",
+    "province": "贵州省",
+    "city": "六盘水市",
+    "district": "水城县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "632321",
+    "province": "青海省",
+    "city": "黄南藏族自治州",
+    "district": "同仁县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "530422",
+    "province": "云南省",
+    "city": "玉溪市",
+    "district": "澄江县",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "330103",
+    "province": "浙江省",
+    "city": "杭州市",
+    "district": "下城区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  },
+  {
+    "code": "330104",
+    "province": "浙江省",
+    "city": "杭州市",
+    "district": "江干区",
+    "status": "OLD_REFERENCE_ABSENT_FROM_DATED_ACTIVE_SNAPSHOT_NOT_AUTOMAPPED"
+  }
+]

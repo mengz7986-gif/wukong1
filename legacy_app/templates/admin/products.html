@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block title %}商品管理 - 彩虹仓{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-box"></i> 商品管理
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button class="btn btn-sm btn-outline-secondary" onclick="showAddParentModal()">
+                <i class="fas fa-folder-plus"></i> 添加分类
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="migrateToDefaultParent()">
+                <i class="fas fa-database"></i> 迁移现有商品
+            </button>
+            <a class="btn btn-sm btn-outline-primary" href="/admin/settings">
+                <i class="fas fa-truck"></i> 运费设置
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="sk-table-card mb-3">
+  <div class="p-3 d-flex gap-2 flex-wrap">
+    <select id="productFilterWarehouse" class="form-select w-auto"><option value="">全部仓库</option></select>
+    <select id="productFilterCategory" class="form-select w-auto"><option value="">全部分类</option></select>
+    <input id="productFilterSearch" type="search" class="form-control w-auto" placeholder="搜索商品或分类">
+    <select id="productFilterStatus" class="form-select w-auto"><option value="">全部状态</option><option value="active">在售</option><option value="inactive">下架</option><option value="paused">TG停售</option></select>
+    <span id="productPageSummary" class="align-self-center"></span>
+  </div>
+  <div class="sk-table-head">
+    <strong><i class="fas fa-layer-group me-1"></i>商品分类 / 品牌</strong>
+    <span class="sk-meta">点击分类展开口味；分类操作不会影响 TG 机器人规则</span>
+  </div>
+  <div class="p-3">
+    <div id="loading" class="text-center py-4">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">加载中...</span>
+      </div>
+    </div>
+    <div id="product-category-list" class="d-grid gap-2" style="display:none;"></div>
+    <div id="products-content" style="display:none;"></div>
+    <div class="mt-3">
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+        <i class="fas fa-plus"></i> 添加商品口味
+      </button>
+      <button class="btn btn-outline-primary ms-2" onclick="showBatchProductModal()">
+        <i class="fas fa-layer-group"></i> 批量添加商品
+      </button>
+      <button class="btn btn-outline-danger ms-2" onclick="batchClearSelectedStock()">
+        <i class="fas fa-box-open"></i> 批量删除库存
+      </button>
+      <button class="btn btn-danger ms-2" onclick="batchArchiveSelectedProducts()">
+        <i class="fas fa-trash"></i> 批量删除口味
+      </button>
+      <span class="small text-muted ms-2">已选 <strong id="selectedProductCount">0</strong> 个口味</span>
+    </div>
+  </div>
+</div>
+
+<!-- 添加父级分类模态框 -->
+<div class="modal fade" id="addParentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">添加商品分类</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addParentForm">
+                    <div class="mb-3"><label for="parentWarehouse" class="form-label">所属仓库</label><select id="parentWarehouse" class="form-select" required></select></div>
+                    <div class="mb-3">
+                        <label for="parentName" class="form-label">分类名称</label>
+                        <input type="text" class="form-control" id="parentName" placeholder="例如：饮料、零食等" required>
+                        <div class="form-text">父级分类用于组织商品，不可直接购买</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="addParentCategory()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加商品模态框 -->
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">添加商品</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addProductForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="productName" class="form-label">口味名称</label>
+                            <input type="text" class="form-control" id="productName" placeholder="例如：苹果、桃子、西瓜" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="productParent" class="form-label">父级分类</label>
+                            <select class="form-select" id="productParent">
+                                <option value="">使用默认分类</option>
+                            </select>
+                            <div class="form-text">先选品类，再自动继承该类目的统一价格</div>
+                        </div>
+                    </div>
+                    <div class="alert alert-light border mb-3">
+                        <div class="fw-semibold">类目统一价格</div>
+                        <div id="addPriceSummary" class="small text-muted">请选择品类，系统会自动带出该类目的统一价格。</div>
+                        <div class="small text-muted mt-1">新增商品时不再逐个输入客户等级价；统一改价请到“商品分类”里点“同步价格/预警”。</div>
+                    </div>
+                    <label for="costPrice" class="form-label">成本（默认，选填）</label>
+                    <input type="number" class="form-control mb-3" id="costPrice" min="0" step="0.01" placeholder="未填写；明确填0表示0元">
+                    <input type="hidden" id="level1Price" value="0">
+                    <input type="hidden" id="level2Price" value="0">
+                    <input type="hidden" id="regularPrice" value="0">
+                    <div class="mb-3">
+                        <label for="productWarehouse" class="form-label">绑定仓库</label>
+                        <select class="form-select" id="productWarehouse" required>
+                            <option value="">请选择仓库...</option>
+                        </select>
+                        <div class="form-text">商品将绑定到选定仓库，库存也会在该仓库中管理</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="initialStock" class="form-label">初始库存</label>
+                        <input type="number" class="form-control" id="initialStock" value="0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="lowStockThreshold" class="form-label">少量预警值</label>
+                        <input type="number" class="form-control" id="lowStockThreshold" value="20" min="0">
+                        <div class="form-text">最低可设 0。下单机器人库存为 0 才 TG 停售；批发机器人库存到达预警值及以下 TG 停售。</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="productDescription" class="form-label">商品描述</label>
+                        <textarea class="form-control" id="productDescription" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="addProduct()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 同步分类价格 / 预警模态框 -->
+<div class="modal fade" id="parentBatchUpdateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">同步价格 / 预警</h5>
+                    <div class="small text-muted">统一修改该品类及其下全部口味</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="parentBatchUpdateId">
+                <div class="alert alert-warning">
+                    当前品类：<strong id="parentBatchUpdateName">-</strong><br>
+                    保存后会覆盖该品类下所有口味的对应价格和少量预警值。
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">成本</label>
+                        <input id="parentBatchCostPrice" type="number" step="0.01" min="0" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">合伙人价</label>
+                        <input id="parentBatchLevel1Price" type="number" step="0.01" min="0" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">超级VIP价</label>
+                        <input id="parentBatchLevel2Price" type="number" step="0.01" min="0" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">VIP客户价</label>
+                        <input id="parentBatchRegularPrice" type="number" step="0.01" min="0" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">少量预警值</label>
+                        <input id="parentBatchLowStockThreshold" type="number" step="1" min="0" class="form-control">
+                    </div>
+                </div>
+                <div class="form-text mt-3">
+                    成本用于新入库的默认成本及当前库存估值，不追改历史FIFO批次或订单利润。售价允许低于成本，亏损如实保留；销售等级价保持合伙人价 ≤ 超级VIP价 ≤ VIP客户价。零价与亏损需确认，成本未知时不估算利润。少量预警值最低可设0；到达预警值及以下TG停售。
+                </div>
+                <div id="parentBatchUpdateStatus" class="alert mt-3" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="submitParentBatchUpdateBtn" onclick="submitParentBatchUpdate()">
+                    <i class="fas fa-save me-1"></i>确认同步
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量添加商品模态框 -->
+<div class="modal fade" id="batchProductModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">批量添加商品</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-light border">
+                    选择仓库和分类，一行一个 <code>口味 数量</code>，支持空格或 Tab。
+                    <div class="small text-muted mt-1">
+                        数量可填0。新口味继承分类价格；恢复口味保留原价格，不恢复历史库存。正数库存使用当前成本建立进货批次；缺价则整批不执行。
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">所属仓库</label>
+                    <select id="batchProductWarehouse" class="form-select" onchange="populateBatchProductCategories()"></select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">所属分类</label>
+                    <select id="batchProductCategory" class="form-select" onchange="invalidateBatchProductPreview()"></select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">批量数据</label>
+                    <textarea id="batchProductText" class="form-control" rows="8" oninput="invalidateBatchProductPreview()" placeholder="苹果 500&#10;葡萄 100&#10;荔枝冰 50"></textarea>
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    <button class="btn btn-outline-primary" type="button" onclick="previewBatchProducts()"><i class="fas fa-eye"></i> 预览校验</button>
+                    <button class="btn btn-primary batch-product-execute" disabled type="button" onclick="submitBatchProducts()"><i class="fas fa-upload"></i> 确认整批执行</button>
+                </div>
+                <div class="small text-muted mb-2" id="batchProductSummary">尚未预览</div>
+                <div class="table-responsive" style="max-height: 360px; overflow:auto;">
+                    <table class="table table-sm sk-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>口味</th>
+                                <th>数量</th>
+                                <th>当前状态</th>
+                                <th>执行结果</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batchProductPreviewBody">
+                            <tr><td colspan="4" class="text-center text-muted">先预览再提交</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary batch-product-execute" disabled onclick="submitBatchProducts()">确认整批执行</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑库存模态框 -->
+<div class="modal fade" id="editStockModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">编辑库存</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editStockForm">
+                    <input type="hidden" id="editStockProductId">
+                    <div class="mb-3">
+                        <label for="editStockProductName" class="form-label">商品名称</label>
+                        <input type="text" class="form-control" id="editStockProductName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editStockWarehouse" class="form-label">仓库</label>
+                        <select class="form-select" id="editStockWarehouse" required>
+                            <option value="">请选择仓库...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editStockQuantity" class="form-label">库存数量</label>
+                        <input type="number" class="form-control" id="editStockQuantity" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateStock()">更新</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑商品模态框 -->
+<div class="modal fade" id="editProductModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">编辑商品信息</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProductForm">
+                    <input type="hidden" id="editProductId">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editProductName" class="form-label">口味名称</label>
+                            <input type="text" class="form-control" id="editProductName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editProductParent" class="form-label">父级分类</label>
+                            <select class="form-select" id="editProductParent">
+                                <option value="">使用默认分类</option>
+                            </select>
+                        </div>
+                    </div>
+                    <h6 class="mt-4 mb-3">价格设置（允许亏本；合伙人 ≤ 超级VIP ≤ VIP客户）</h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="editCostPrice" class="form-label">成本（¥）</label>
+                            <input type="number" class="form-control" id="editCostPrice" step="0.01" min="0" placeholder="留空表示缺少成本">
+                            <div class="form-text">仅用于参考估值，不修改历史批次进货价；留空表示未填写，填0表示明确0元</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="editLevel1Price" class="form-label">合伙人价（¥）</label>
+                            <input type="number" class="form-control" id="editLevel1Price" step="0.01" required>
+                            <div class="form-text">合伙人</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="editLevel2Price" class="form-label">超级VIP价（¥）</label>
+                            <input type="number" class="form-control" id="editLevel2Price" step="0.01" required>
+                            <div class="form-text">超级VIP</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="editRegularPrice" class="form-label">VIP客户价（¥）</label>
+                            <input type="number" class="form-control" id="editRegularPrice" step="0.01" required>
+                            <div class="form-text">VIP客户</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProductWarehouse" class="form-label">绑定仓库</label>
+                        <select class="form-select" id="editProductWarehouse" required>
+                            <option value="">请选择仓库...</option>
+                        </select>
+                        <div class="form-text">更改仓库后，需要在目标仓库设置库存</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editLowStockThreshold" class="form-label">少量预警值</label>
+                        <input type="number" class="form-control" id="editLowStockThreshold" min="0" value="20">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProductDescription" class="form-label">商品描述</label>
+                        <textarea class="form-control" id="editProductDescription" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="editProductStatus">
+                            <label class="form-check-label" for="editProductStatus">
+                                商品状态（勾选为在售，取消为下架）
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateProduct()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/category_warehouse.js?v=next-batch"></script>
+<script src="/static/js/products.js?v=608e00dda3f4cb37b938c8d5085d082047cab2650c9326df51a1db0c825f2af8"></script>
+<script src="/static/js/product_units.js?v=eb276d8ded7755481c3451342e01ac2284ffd2a62e8dffa18d36483e9755db9a"></script>
+{% endblock %}

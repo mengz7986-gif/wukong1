@@ -1,0 +1,59 @@
+<aside id="sidebar" class="sk-sidebar">
+    <div class="sk-sidebar-brand">
+        <div class="sk-brand-mark"><i class="fas fa-robot"></i></div>
+        <div class="sk-brand-text">
+            <div class="sk-brand-title">彩虹仓</div>
+            <div class="sk-brand-sub">RAINBOW WAREHOUSE</div>
+        </div>
+    </div>
+
+    <div class="sk-sidebar-section">主菜单</div>
+    <nav class="sk-nav">
+        <a class="sk-nav-link {% if request.url.path in ['/', '/admin'] %}active{% endif %}" href="/admin">
+            <i class="fas fa-tachometer-alt"></i><span>仪表板</span>
+        </a>
+        <a class="sk-nav-link {% if '/admin/orders' in request.url.path %}active{% endif %}" href="/admin/orders">
+            <i class="fas fa-shopping-cart"></i><span>订单管理</span>
+        </a>
+        <a class="sk-nav-link {% if '/admin/products' in request.url.path %}active{% endif %}" href="/admin/products">
+            <i class="fas fa-box"></i><span>商品管理</span>
+        </a>
+        <a class="sk-nav-link {% if '/admin/users' in request.url.path %}active{% endif %}" href="/admin/users">
+            <i class="fas fa-users"></i><span>用户管理</span>
+        </a>
+        <a class="sk-nav-link {% if '/admin/warehouses' in request.url.path %}active{% endif %}" href="/admin/warehouses">
+            <i class="fas fa-warehouse"></i><span>仓库管理</span>
+        </a>
+        <a class="sk-nav-link {% if '/admin/inventory' in request.url.path %}active{% endif %}" href="/admin/inventory">
+            <i class="fas fa-boxes"></i><span>到货入库</span>
+        </a>
+
+        <div class="sk-sidebar-section">财务与统计</div>
+        <a class="sk-nav-link {% if '/admin/finance' in request.url.path %}active{% endif %}" href="/admin/finance">
+            <i class="fas fa-hand-holding-usd"></i><span>人工收账</span>
+        </a>
+        <a class="sk-nav-link {% if '/admin/daily' in request.url.path %}active{% endif %}" href="/admin/daily">
+            <i class="fas fa-chart-line"></i><span>经营统计</span>
+        </a>
+        <div class="sk-sidebar-section">系统</div>
+        <a class="sk-nav-link {% if '/admin/queue-recovery' in request.url.path %}active{% endif %}" href="/admin/queue-recovery"><i class="fas fa-list-check"></i><span>待处理中心</span></a>
+        <a class="sk-nav-link {% if '/admin/blocked_addresses' in request.url.path %}active{% endif %}" href="/admin/blocked_addresses">
+            <i class="fas fa-ban"></i><span>异常地址库</span>
+        </a>
+        <a class="sk-nav-link {% if '/admin/ai' in request.url.path or '/admin/rules' in request.url.path %}active{% endif %}" href="/admin/ai"><i class="fas fa-brain"></i><span>智能接单中心</span></a>
+        <a class="sk-nav-link {% if '/admin/settings' in request.url.path %}active{% endif %}" href="/admin/settings">
+            <i class="fas fa-cog"></i><span>运费与接单设置</span>
+        </a>
+    </nav>
+
+    <div class="sk-sidebar-footer">
+        <div class="sk-user-chip">
+            <div class="sk-user-avatar"><i class="fas fa-user-shield"></i></div>
+            <div>
+                <div class="sk-user-name">管理员</div>
+                <div class="sk-user-role">后台会话已登录</div>
+            </div>
+        </div>
+        <a class="sk-logout-btn" href="/logout"><i class="fas fa-sign-out-alt"></i> 退出登录</a>
+    </div>
+</aside>

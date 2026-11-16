@@ -1,0 +1,30 @@
+[
+  {
+    "name": "岑岭县",
+    "province": "新疆维吾尔自治区",
+    "city": "喀什地区",
+    "district": "岑岭县",
+    "level": 3,
+    "direct_county_city_view": false,
+    "published": "2026-03-26",
+    "source": "https://www.xinjiang.gov.cn/xinjiang/tzgg/202603/285e5d25b8ad4eae8df6b0f0efe847f6.shtml",
+    "official_code": null,
+    "code_verified": false,
+    "street_relationships_verified": false,
+    "scope": "Government-announced name and parent only; no invented official codes or street reparenting"
+  },
+  {
+    "name": "草湖市",
+    "province": "新疆维吾尔自治区",
+    "city": "草湖市",
+    "district": "草湖市",
+    "level": 3,
+    "direct_county_city_view": true,
+    "published": "2026-04-17",
+    "source": "https://www.xinjiang.gov.cn/xinjiang/tzgg/202604/3691350b13064945947d8f78933ccb3e.shtml",
+    "official_code": null,
+    "code_verified": false,
+    "street_relationships_verified": false,
+    "scope": "Government-announced provincial direct-admin county city; city field is adapter presentation, not a prefecture-level claim"
+  }
+]

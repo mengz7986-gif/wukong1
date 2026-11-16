@@ -1,0 +1,6 @@
+Generated with the built-in image_gen tool, 2026-10-23.
+Asset: inventory-sunlit-snow-mountain-v1.png
+Scope: warehouse 1 inventory board background only.
+
+Final generation prompt:
+Use case: stylized-concept. Asset type: clean background painting for a Chinese warehouse stock information board. Generate a wide landscape 3:2 composition, modern elegant landscape painting of 日照金山: majestic snow-covered Himalayan-style peaks catching soft golden sunrise light, layered blue-grey mountains, quiet mist, subtle pale lake reflection. Contemporary fine-art landscape, refined brush texture, natural restrained gold, cream and mist blue palette. Image only, absolutely no text, labels, logos, people, buildings, watermarks or borders. Broad quiet pale upper sky for overlaid dark headings, mountains primarily across the middle distance with luminous golden peaks visible near the upper third and outer edges. Keep contrast tasteful, serene, sophisticated, not neon or fantasy. This will sit behind opaque inventory cards, so broad coherent scenery and visible peripheral landscape matter more than tiny detail.

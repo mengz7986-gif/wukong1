@@ -1,0 +1,48 @@
+name: Independent18274 CONNECT UNKNOWN safety
+on:
+  push:
+    branches: [codex/receipt18274-exact-hold-20261103]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact18274:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tests/four_specials_requirements.txt
+      - name: Singleton proof, direct calls, pending injection and unchanged prior scopes
+        run: |
+          mkdir -p test-results
+          python -m pytest tests/test_connect18274_hold.py -q --disable-warnings --junitxml=test-results/exact18274.xml
+          python -m pytest tests/test_timeout36_hold.py tests/test_six_unknown_hold.py tests/test_frozen_direct_receipts.py -q --disable-warnings --junitxml=test-results/prior-direct-protection.xml
+          python -m pytest tests/test_receipt_speed.py -k 'timeout_not_retried or direct_timeout or success_ack_followed or full_multipart or audit_failure_after_ack' -q --disable-warnings --junitxml=test-results/affected-receipt.xml
+          git diff --exit-code 5eeeb7e HEAD -- legacy_app/inventory_preview.py legacy_app/inventory_admin.py legacy_app/bot.py legacy_app/templates/admin/inventory_image.html legacy_app/static/images tests/test_inventory_unified.py .github/workflows/inventory-unified.yml legacy_app/models.py legacy_app/config.py legacy_app/api.py legacy_app/order_parser.py legacy_app/execution_safety.py legacy_app/p0_recovery_protection.py legacy_app/recovery_timeout_hold.py legacy_app/timeout_receipt_hold.py legacy_app/cancel_notice_hold.py legacy_app/telegram_delivery.py legacy_app/telegram_delivery_sync.py
+          python - <<'PY'
+          import ast,subprocess
+          from pathlib import Path
+          def protected(source):
+              tree=ast.parse(source)
+              return [ast.dump(x) for x in tree.body if isinstance(x,ast.Assign) or (isinstance(x,ast.FunctionDef) and x.name=='validate')]
+          for name in ['six_unknown_receipt_hold.py','receipt_review_gate.py']:
+              old=subprocess.check_output(['git','show','5eeeb7e:legacy_app/'+name],text=True)
+              assert protected(old)==protected(Path('legacy_app',name).read_text()),'PRIOR_SCOPE_OR_REVIEW_CHANGED'
+          PY
+      - name: Compatible4b3e927 rollback retains independent18274 guard
+        run: |
+          mkdir -p "$RUNNER_TEMP/rollback-4b3e927"
+          git archive 4b3e927 | tar -x -C "$RUNNER_TEMP/rollback-4b3e927"
+          cp legacy_app/connect_receipt_hold.py legacy_app/six_unknown_receipt_hold.py legacy_app/receipt_review_gate.py "$RUNNER_TEMP/rollback-4b3e927/legacy_app/"
+          cp tests/test_connect18274_hold.py "$RUNNER_TEMP/rollback-4b3e927/tests/"
+          python -m pytest "$RUNNER_TEMP/rollback-4b3e927/tests/test_connect18274_hold.py" "$RUNNER_TEMP/rollback-4b3e927/tests/test_timeout36_hold.py" "$RUNNER_TEMP/rollback-4b3e927/tests/test_six_unknown_hold.py" "$RUNNER_TEMP/rollback-4b3e927/tests/test_frozen_direct_receipts.py" -q --disable-warnings --junitxml=test-results/compatible-rollback.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: connect18274-safety-evidence
+          path: test-results/

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}彩虹仓{% endblock %}</title>
+    <link href="/static/vendor/bootstrap/bootstrap.min.css?v=5.3.0" rel="stylesheet">
+    <link href="/static/vendor/fontawesome/css/all.min.css?v=6.4.0" rel="stylesheet">
+    <link href="/static/css/style.css?v=20261013-admin-responsive" rel="stylesheet">
+    <style id="sk-critical-css">
+:root{--sk-primary:#1e293b;--sk-secondary:#f8fafc;--sk-accent:#3b82f6;--sk-border:#e4e4e7;--sk-muted:#71717a;--sk-text:#18181b;--sk-sidebar-width:232px;--sk-radius:10px;--sk-shadow:0 1px 2px rgba(15,23,42,.06),0 1px 3px rgba(15,23,42,.08)}
+*{box-sizing:border-box}
+html,body{height:100%}
+body.sk-app{margin:0;color:var(--sk-text);background:var(--sk-secondary);font-size:13px;font-family:Inter,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+.sk-shell{min-height:100vh}
+.sk-sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sk-sidebar-width);background:#0f172a;color:#e2e8f0;z-index:1040;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.06);overflow:auto;transition:transform .2s ease}
+.sk-sidebar-brand{display:flex;align-items:center;gap:12px;padding:18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sk-brand-mark{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff}
+.sk-brand-title{font-weight:600;color:#fff;line-height:1.2}
+.sk-brand-sub{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em}
+.sk-sidebar-section{margin:16px 18px 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#64748b}
+.sk-nav{display:flex;flex-direction:column;gap:4px;padding:0 12px;flex:1}
+.sk-nav-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;color:#cbd5e1;text-decoration:none;font-weight:500}
+.sk-nav-link i{width:18px;text-align:center}
+.sk-nav-link:hover{background:rgba(148,163,184,.12);color:#fff}
+.sk-nav-link.active{background:rgba(59,130,246,.18);color:#fff;box-shadow:inset 3px 0 0 #3b82f6}
+.sk-sidebar-footer{padding:14px;border-top:1px solid rgba(255,255,255,.08);margin-top:auto}
+.sk-user-chip{display:flex;gap:10px;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,.04);margin-bottom:10px}
+.sk-user-avatar{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(59,130,246,.2);color:#93c5fd}
+.sk-user-name{font-weight:600;color:#fff;font-size:13px}
+.sk-user-role{font-size:11px;color:#94a3b8}
+.sk-logout-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border-radius:10px;padding:10px 12px;text-decoration:none;color:#fecaca;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.18);font-size:13px;font-weight:500}
+.sk-main{margin-left:var(--sk-sidebar-width);min-height:100vh;display:flex;flex-direction:column}
+body.sk-sidebar-collapsed .sk-sidebar{transform:translateX(-105%)}
+body.sk-sidebar-collapsed .sk-main{margin-left:0}
+.sk-topbar{position:sticky;top:0;z-index:1020;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 20px;background:rgba(248,250,252,.92);border-bottom:1px solid var(--sk-border)}
+.sk-topbar-left{display:flex;align-items:center;gap:12px}
+.sk-topbar-kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--sk-muted)}
+.sk-topbar-title{font-size:18px;font-weight:600;color:var(--sk-primary)}
+.sk-topbar-right{display:flex;align-items:center;gap:10px}
+.sk-icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--sk-border);background:#fff;color:var(--sk-primary);display:grid;place-items:center}
+.sk-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;font-size:12px;font-weight:600}
+.sk-content{padding:20px}
+.sk-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.sk-stat-card{background:#fff;border:1px solid var(--sk-border);border-radius:var(--sk-radius);box-shadow:var(--sk-shadow);padding:16px}
+.sk-summary-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:0 0 14px}
+.sk-summary-card{background:#fff;border:1px solid var(--sk-border);border-radius:var(--sk-radius);box-shadow:var(--sk-shadow);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}.sk-summary-card span{color:var(--sk-muted)}.sk-summary-card strong{font-size:20px;color:var(--sk-primary)}
+.sk-stat-label{color:var(--sk-muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.sk-stat-value{margin-top:8px;font-size:28px;font-weight:600;color:var(--sk-primary)}
+.card{border:1px solid var(--sk-border)!important;border-radius:var(--sk-radius)!important;box-shadow:var(--sk-shadow)!important;background:#fff!important}
+.card-header{background:#fff!important;border-bottom:1px solid var(--sk-border)!important;font-weight:600}
+.btn{border-radius:10px!important;font-size:13px!important;font-weight:500}
+.btn-primary{background:var(--sk-accent)!important;border-color:var(--sk-accent)!important}
+.sk-btn-secondary{background:#fff!important;border:1px solid var(--sk-border)!important;color:var(--sk-primary)!important}
+.table thead th{color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.04em;background:#fafafa}
+.sk-sidebar-backdrop{display:none}
+@media (max-width:991.98px){
+.sk-sidebar{transform:translateX(-105%);transition:transform .2s ease}
+body.sk-sidebar-open .sk-sidebar{transform:translateX(0)}
+.sk-main{margin-left:0}
+.sk-sidebar-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:1035}
+body.sk-sidebar-open .sk-sidebar-backdrop{display:block}
+.sk-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sk-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:575.98px){.sk-stat-grid,.sk-summary-grid{grid-template-columns:1fr}}
+    </style>
+    <link href="/static/css/ui_polish.css?v=20261013-admin-responsive" rel="stylesheet">
+    <link href="/static/css/admin_unified.css?v=20261018-stage2-a1" rel="stylesheet">
+    <script src="/static/vendor/jquery/jquery-3.7.0.min.js?v=3.7.0"></script>
+    <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js?v=5.3.0"></script>
+    <script src="/static/js/operation_key.js?v=20261012-http-uuid"></script>
+    <script src="/static/js/business_time.js?v=20261012-beijing-24h"></script>
+    <script src="/static/js/api_config.js"></script>
+    <script src="/static/js/order_filter_state.js?v=20261018-session-v1"></script>
+    <script src="/static/js/business_time_range.js?v=20261012-beijing-24h"></script>
+    <script src="/static/js/rainbow_range_picker.js?v=20261012-mobile-range"></script>
+</head>
+<body class="sk-app sk-sidebar-collapsed">
+    <div class="sk-shell">
+        {% include "sidebar.html" %}
+
+        <div class="sk-main">
+            {% include "navbar.html" %}
+            <main class="sk-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <div class="sk-sidebar-backdrop" id="skSidebarBackdrop"></div>
+
+    <script src="/static/js/logical_categories.js?v=20261011-logical-category"></script>
+    {% block scripts %}{% endblock %}
+
+<script>
+(function(){
+  function labelMobileTables(root){
+    (root || document).querySelectorAll('table').forEach(function(table){
+      table.classList.add('sk-mobile-table');
+      var labels=Array.from(table.querySelectorAll('thead th')).map(function(th){return th.textContent.trim();});
+      table.querySelectorAll('tbody tr').forEach(function(row){
+        Array.from(row.children).forEach(function(cell,index){
+          if(cell.tagName!=='TD')return;
+          if(cell.hasAttribute('colspan'))cell.classList.add('sk-table-message');
+          if(!cell.dataset.label&&labels[index])cell.dataset.label=labels[index];
+          if(labels[index]&&/^(\u64cd\u4f5c|\u52a8\u4f5c)$/.test(labels[index]))cell.classList.add('sk-action-cell');
+          if(labels[index]&&/^(\u9009\u62e9)?$/.test(labels[index])&&cell.querySelector('input[type="checkbox"]'))cell.classList.add('sk-select-cell');
+        });
+      });
+    });
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    labelMobileTables(document);
+    new MutationObserver(function(records){if(records.some(function(record){return record.addedNodes.length;}))labelMobileTables(document);}).observe(document.body,{childList:true,subtree:true});
+  });
+  function attachAuth(options){
+    options = options || {};
+    options.headers = options.headers || {};
+    if (window.API_SECRET_KEY) {
+      options.headers['X-API-Key'] = window.API_SECRET_KEY;
+      if (typeof options.data === 'string') {
+        // leave as-is
+      } else if (options.data && typeof options.data === 'object' && !(options.data instanceof FormData)) {
+        options.data.api_key = window.API_SECRET_KEY;
+      } else if (!options.data) {
+        options.data = {api_key: window.API_SECRET_KEY};
+      } else if (options.data instanceof FormData) {
+        if (!options.data.has('api_key')) options.data.append('api_key', window.API_SECRET_KEY);
+      }
+      if (!options.url) return options;
+      if (options.url.indexOf('api_key=') === -1) {
+        options.url += (options.url.indexOf('?') > -1 ? '&' : '?') + 'api_key=' + encodeURIComponent(window.API_SECRET_KEY);
+      }
+    }
+    return options;
+  }
+  if (window.jQuery) {
+    $.ajaxSetup({
+      beforeSend: function(xhr, settings){
+        if (window.API_SECRET_KEY) {
+          xhr.setRequestHeader('X-API-Key', window.API_SECRET_KEY);
+          if (settings.url && settings.url.indexOf('api_key=') === -1) {
+            settings.url += (settings.url.indexOf('?') > -1 ? '&' : '?') + 'api_key=' + encodeURIComponent(window.API_SECRET_KEY);
+          }
+        }
+      }
+    });
+    if (window.bootstrap && !jQuery.fn.modal) {
+      jQuery.fn.modal = function(action) {
+        return this.each(function() {
+          var instance = bootstrap.Modal.getOrCreateInstance(this);
+          if (action === 'hide') instance.hide();
+          else if (action === 'toggle') instance.toggle();
+          else instance.show();
+        });
+      };
+    }
+  }
+
+  function setSidebar(open){
+    if (window.matchMedia('(max-width: 991.98px)').matches) {
+      document.body.classList.toggle('sk-sidebar-open', !!open);
+    } else {
+      document.body.classList.toggle('sk-sidebar-collapsed', !open);
+    }
+  }
+  document.addEventListener('click', function(e){
+    var t = e.target.closest('[data-sk-toggle="sidebar"]');
+    if (t) {
+      e.preventDefault();
+      var mobile=window.matchMedia('(max-width: 991.98px)').matches;
+      setSidebar(mobile ? !document.body.classList.contains('sk-sidebar-open') : document.body.classList.contains('sk-sidebar-collapsed'));
+    }
+    if (e.target.id === 'skSidebarBackdrop') setSidebar(false);
+  });
+})();
+</script>
+
+</body>
+</html>

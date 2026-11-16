@@ -1,0 +1,38 @@
+name: Six order recognition requirements isolated Linux
+on:
+  push:
+    branches: [codex/order-six-20261103]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  order-six:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tests/four_specials_requirements.txt
+      - name: Six requirements and affected lexical regressions
+        run: |
+          mkdir -p test-results
+          python -m pytest tests/test_order_six_final.py tests/test_four_specials_regressions.py tests/test_flavor_boundary_delta.py -q --disable-warnings --junitxml=test-results/order-six.xml
+          python -m pytest tests/test_four_specials_pipeline.py -k 'durable_duplicate or late_expired or concurrent_same_message or restart_never or restart_does_not_rearm or quantity_split' -q --disable-warnings --junitxml=test-results/business-safety.xml
+          python -m pytest tests/test_six_unknown_hold.py -k 'legacy_agent or production_queue_start or transport_guard' -q --disable-warnings --junitxml=test-results/affected-held-entry.xml
+          python -m pytest tests/test_receipt_speed.py -k 'timeout_not_retried or direct_timeout or success_ack_followed or full_multipart or audit_failure_after_ack' -q --disable-warnings --junitxml=test-results/affected-receipt.xml
+          git diff --exit-code 05b2257 HEAD -- legacy_app/six_unknown_receipt_hold.py legacy_app/cancel_notice_hold.py legacy_app/frozen_direct_receipts.py legacy_app/p0_recovery_protection.py legacy_app/receipt_review_gate.py legacy_app/success_receipt_audit.py
+      - name: Same-load normal order comparison, explicitly simulated Telegram ACK
+        run: |
+          mkdir -p "$RUNNER_TEMP/verified-production-baseline"
+          git archive 7e2cb55 | tar -x -C "$RUNNER_TEMP/verified-production-baseline"
+          python tests/benchmark_receipt_ack.py --source "$RUNNER_TEMP/verified-production-baseline" --scenario single --samples 12 --output "$GITHUB_WORKSPACE/test-results/baseline-normal.json" > test-results/baseline-benchmark.log 2>&1
+          python tests/benchmark_receipt_ack.py --scenario single --samples 12 --output "$GITHUB_WORKSPACE/test-results/candidate-normal.json" > test-results/candidate-benchmark.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: order-six-isolated-evidence
+          path: test-results/

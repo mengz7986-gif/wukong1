@@ -1,0 +1,20 @@
+[Unit]
+Description=Newbot split release only, no Telegram sender
+After=newbot-backend.service
+ConditionPathExists=/etc/newbot/split-release-policy.json
+[Service]
+User=newbot
+Group=newbot
+WorkingDirectory=/opt/newbot/current/legacy_app
+ExecStart=/opt/newbot/venv/bin/python /opt/newbot/current/deployment/newbot/start_split_release.py
+Restart=no
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/newbot
+MemoryMax=160M
+TasksMax=8
+StandardOutput=journal
+StandardError=journal
+# Intentionally no Install section: do not enable until separately approved.

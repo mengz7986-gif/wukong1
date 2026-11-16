@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}仪表板 - 彩虹仓{% endblock %}
+
+{% block page_heading %}仪表板{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-3">
+    <div>
+        <div class="text-muted small text-uppercase" style="letter-spacing:.08em;">Overview</div>
+        <h1 class="h3 mb-0">运营总览</h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/admin/orders" class="btn btn-primary btn-sm"><i class="fas fa-shopping-cart"></i> 订单</a>
+        <a href="/admin/finance" class="btn sk-btn-secondary btn-sm"><i class="fas fa-hand-holding-usd"></i> 收账</a>
+    </div>
+</div>
+
+<div class="sk-stat-grid mb-3">
+    <div class="sk-stat-card">
+        <div class="sk-stat-label"><i class="fas fa-users me-1"></i>用户总数</div>
+        <div class="sk-stat-value" id="total-users">-</div>
+    </div>
+    <div class="sk-stat-card">
+        <div class="sk-stat-label"><i class="fas fa-box me-1"></i>商品总数</div>
+        <div class="sk-stat-value" id="total-products">-</div>
+    </div>
+    <div class="sk-stat-card">
+        <div class="sk-stat-label"><i class="fas fa-shopping-cart me-1"></i>订单总数</div>
+        <div class="sk-stat-value" id="total-orders">-</div>
+    </div>
+    <div class="sk-stat-card">
+        <div class="sk-stat-label"><i class="fas fa-clock me-1"></i>待处理订单</div>
+        <div class="sk-stat-value" id="pending-orders">-</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-chart-line me-1"></i> 实时订单</span>
+                <a class="small text-decoration-none" href="/admin/orders">查看全部</a>
+            </div>
+            <div class="card-body">
+                <div id="loading" class="text-center py-4">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                </div>
+                <div id="recent-orders" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>订单号</th>
+                                    <th>用户</th>
+                                    <th>金额</th>
+                                    <th>状态</th>
+                                    <th>时间</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-bell me-1"></i> 最新动态
+            </div>
+            <div class="card-body">
+                <div id="activities">
+                    <p class="text-muted text-center mb-0">暂无动态</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dashboard.js?v=20261012-beijing-24h"></script>
+{% endblock %}

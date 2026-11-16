@@ -1,0 +1,51 @@
+/* Shared admin presentation only: no business controls are hidden. */
+:root {
+  --rw-surface: #ffffff;
+  --rw-border: #dce3ed;
+  --rw-focus: #2563eb;
+  --rw-radius: 12px;
+}
+.sk-content { min-width: 0; }
+.sk-content .sk-page-header { gap: 16px; flex-wrap: wrap; }
+.sk-content .sk-page-title { font-size: clamp(1.25rem, 2vw, 1.65rem); line-height: 1.4; }
+.sk-content .sk-toolbar,
+.sk-content .sk-table-card,
+.sk-content .card { border-color: var(--rw-border); border-radius: var(--rw-radius); }
+.sk-content .form-control,
+.sk-content .form-select { min-height: 40px; line-height: 1.5; }
+.sk-content .btn { min-height: 36px; white-space: normal; }
+.sk-content :is(button, a, input, select, textarea):focus-visible,
+.modal :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid var(--rw-focus);
+  outline-offset: 2px;
+}
+.sk-content .table-responsive { max-width: 100%; overscroll-behavior-x: contain; }
+.sk-content .table { vertical-align: middle; }
+.sk-content .table th { white-space: nowrap; }
+.sk-content .table td { overflow-wrap: anywhere; }
+.sk-content .sk-empty { padding: 32px 16px; line-height: 1.7; }
+.sk-content .orders-toolbar-row { gap: 8px; flex-wrap: wrap; }
+.sk-content .orders-actions-row [role="status"] { font-variant-numeric: tabular-nums; }
+.modal-content { border-radius: var(--rw-radius); }
+.modal-body { overflow-wrap: anywhere; }
+@media (max-width: 575.98px) {
+  .sk-content { padding: 14px 10px; }
+  .sk-content .form-control,
+  .sk-content .form-select { font-size: 16px; min-height: 44px; }
+  .sk-content .btn { min-height: 44px; }
+  .sk-content .sk-toolbar { padding: 12px; }
+  .sk-content .sk-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .sk-content .sk-summary-card { min-width: 0; padding: 12px; flex-wrap: wrap; gap: 6px; }
+  .sk-content .sk-summary-card span { font-size: 12px; }
+  .sk-content .orders-filter-grid { grid-template-columns: minmax(0, 1fr); }
+  .sk-content .orders-filter-field { min-width: 0; }
+  .sk-content .orders-toolbar-row { align-items: stretch; }
+  .sk-content .orders-row-label { flex-basis: 100%; }
+  .modal-dialog { margin: 10px; }
+  .modal-content { max-height: calc(100dvh - 20px); }
+  .modal-body { overflow-y: auto; min-height: 0; }
+  .modal-footer { gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-sidebar { transition: none; }
+}

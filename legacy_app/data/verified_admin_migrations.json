@@ -1,0 +1,25 @@
+[
+  {
+    "province": "重庆市",
+    "city": "重庆市",
+    "old_district": "渝北区",
+    "district": "两江新区",
+    "town": "鸳鸯街道",
+    "old_town_code": "500112014",
+    "town_code": "500157027",
+    "published": "2025-12-05",
+    "source": "https://mzj.cq.gov.cn/zwgk_218/zfxxgkml/tzgg/202512/t20251205_15215632.html",
+    "scope": "Only the exact old district plus this explicitly written street; never migrate other streets or townless legacy districts"
+  },
+  {
+    "province": "重庆市",
+    "city": "重庆市",
+    "old_district": "渝北区",
+    "district": "两江新区",
+    "anchor": "星光大道60号金星科技大厦",
+    "published": "2025-07-24",
+    "source": "https://mzj.cq.gov.cn/zwgk_218/zfxxgkml/tzgg/202507/t20250724_14844585.html",
+    "migration_source": "https://mzj.cq.gov.cn/zwgk_218/zfxxgkml/tzgg/202512/t20251205_15215632.html",
+    "scope": "Only this exact road, number and named POI officially listed within Liangjiang; preserve all following building/room detail and infer no town"
+  }
+]

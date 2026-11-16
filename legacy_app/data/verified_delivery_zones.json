@@ -1,0 +1,5 @@
+[
+  {"province":"江苏省","city":"苏州市","aliases":["工业园区","苏州工业园区"],"kind":"delivery_functional_zone","official_county_code":null,"verified_on":"2026-10-22","source":"https://www.sipac.gov.cn/szgyyq/yqjj/202302/8640093c6fdf4e97b3aebe6d8a315e98.shtml","note":"只核实功能区所属城市，保留原文功能区，不推断其行政区县或街道"},
+  {"province":"河南省","city":"郑州市","aliases":["高新技术开发区","高新技术产业开发区","高新区"],"kind":"delivery_functional_zone","official_county_code":null,"verified_on":"2026-10-22","source":"https://www.zzgx.gov.cn/zjgx/index.jhtml","note":"必须已有明确郑州市范围；保留客户功能区名称，不映射为中原区或其他区县"},
+  {"province":"湖北省","city":"武汉市","aliases":["经济技术开发区","武汉经济技术开发区","武汉经开区","经开区"],"kind":"delivery_functional_zone","official_county_code":null,"verified_on":"2026-10-22","source":"https://dfz.wuhan.gov.cn/sqgk/whsq/","note":"武汉市官方市情单列的开发区、功能区；必须已有明确湖北省武汉市范围，保留原文区域，不推断为汉南区或蔡甸区等行政区县"}
+]

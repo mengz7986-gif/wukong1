@@ -1,0 +1,8 @@
+[Unit]
+Description=Newbot disk and queue growth guard
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/newbot/current/deployment/newbot/protect.py monitor
+UMask=0077
+Nice=10
